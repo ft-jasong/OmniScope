@@ -1,299 +1,324 @@
-"use client"
+'use client';
 
-import { useEffect, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { toast } from "sonner"
-import { ethers } from "ethers"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/components/ui/use-toast';
+import { PublicKey, Connection } from '@solana/web3.js';
+import { getConnection, createTransferTransaction, signAndSendTransaction, getADRTokenBalance } from '@/utils/adr-token-client';
 
-interface DepositInfo {
-  message: string
-  deposit_address: string
-  amount: number
-}
-
-// HSKDeposit contract ABI
-const HSKDepositABI = [
-  {
-    "inputs": [],
-    "name": "deposit",
-    "outputs": [],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "user",
-        "type": "address"
-      }
-    ],
-    "name": "getBalance",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  }
-]
-
-// HSK network settings
-// const HSK_RPC_URL = process.env.NEXT_PUBLIC_HSK_RPC_URL || 'https://mainnet.hsk.xyz'
+// Phantom wallet event types
+type PhantomEvent = 'connect' | 'disconnect' | 'accountChanged'
+type PhantomEventCallback = (publicKey: string | null | undefined) => void
 
 export default function DepositPage() {
-  const [depositInfo, setDepositInfo] = useState<DepositInfo | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [account, setAccount] = useState<string | null>(null)
-  const [userBalance, setUserBalance] = useState('0')
-  const [depositAmount, setDepositAmount] = useState('0.1')
+  const [amount, setAmount] = useState<string>('');
+  const [account, setAccount] = useState<string | null>(null);
+  const [balance, setBalance] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const { toast } = useToast();
+  const router = useRouter();
+  const [connection, setConnection] = useState<Connection | null>(null);
 
+  // Initialize connection
   useEffect(() => {
-    checkConnection()
-    fetchDepositInfo()
-    
-    // Account change event listener
-    if (window.ethereum) {
-      window.ethereum.on('accountsChanged', (accounts: string[]) => {
-        setAccount(accounts[0])
-        if (accounts[0]) {
-          fetchUserBalance(accounts[0])
-        }
-      })
-    }
-    
-    return () => {
-      if (window.ethereum) {
-        window.ethereum.removeListener('accountsChanged', () => {})
-      }
-    }
-  }, [])
+    const conn = getConnection('devnet'); // 'devnet', 'testnet', or 'mainnet-beta'
+    setConnection(conn);
+  }, []);
 
-  const checkConnection = async () => {
-    if (window.ethereum) {
-      try {
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' }) as string[]
-        setAccount(accounts[0])
-        if (accounts[0]) {
-          await fetchUserBalance(accounts[0])
-        }
-      } catch (error) {
-        console.error('Connection error:', error)
-        toast.error("Failed to connect wallet")
-      }
-    } else {
-      toast.error("Please install wallet")
+  // Check wallet connection
+  const checkConnection = useCallback(async () => {
+    const phantom = window.phantom?.solana;
+    if (!phantom) {
+      toast({
+        title: "Phantom 지갑을 찾을 수 없습니다",
+        description: "Phantom 지갑 확장 프로그램을 설치해주세요.",
+        variant: "destructive",
+      });
+      return;
     }
-  }
 
-  const fetchUserBalance = async (userAddress: string) => {
     try {
-      const token = localStorage.getItem("authToken")
-      if (!token) {
-        throw new Error("No authentication token found")
+      // Try to connect to get the public key
+      const { publicKey } = await phantom.connect();
+      const address = publicKey.toString();
+      setAccount(address);
+      setIsConnected(true);
+
+      // Get balance if connection is available
+      if (connection) {
+        const userPublicKey = new PublicKey(address);
+        const userBalance = await getADRTokenBalance(connection, userPublicKey);
+        setBalance(userBalance);
       }
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/${userAddress}/balance`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch balance")
-      }
-
-      const data = await response.json()
-      setUserBalance(data.formatted_balance || '0')
     } catch (error) {
-      console.error('Balance fetch error:', error)
-      toast.error("Failed to fetch balance")
+      console.error("Connection error:", error);
+      setIsConnected(false);
     }
-  }
+  }, [toast, connection]);
 
-  const fetchDepositInfo = async () => {
+  // Connect wallet
+  const connectWallet = async () => {
+    const phantom = window.phantom?.solana;
+    if (!phantom) {
+      toast({
+        title: "Phantom 지갑을 찾을 수 없습니다",
+        description: "Phantom 지갑 확장 프로그램을 설치해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      const token = localStorage.getItem("authToken")
-      if (!token) {
-        throw new Error("No authentication token found")
+      const { publicKey } = await phantom.connect();
+      const address = publicKey.toString();
+      setAccount(address);
+      setIsConnected(true);
+
+      // Get balance if connection is available
+      if (connection) {
+        const userPublicKey = new PublicKey(address);
+        const userBalance = await getADRTokenBalance(connection, userPublicKey);
+        setBalance(userBalance);
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/deposit/info`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      toast({
+        title: "지갑 연결 성공",
+        description: `${address.substring(0, 6)}...${address.substring(address.length - 4)}에 연결되었습니다.`,
+      });
+    } catch (error) {
+      console.error("Connection error:", error);
+      toast({
+        title: "지갑 연결 실패",
+        description: "Phantom 지갑 연결 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
+  };
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch deposit info")
+  // Disconnect wallet
+  const disconnectWallet = async () => {
+    const phantom = window.phantom?.solana;
+    if (phantom) {
+      try {
+        await phantom.disconnect();
+        setAccount(null);
+        setIsConnected(false);
+        setBalance(null);
+        toast({
+          title: "지갑 연결 해제",
+          description: "Phantom 지갑 연결이 해제되었습니다.",
+        });
+      } catch (error) {
+        console.error("Disconnect error:", error);
       }
-      const data = await response.json()
-      setDepositInfo(data)
+    }
+  };
+
+  // Handle account change
+  useEffect(() => {
+    const handleAccountChange: PhantomEventCallback = (publicKey) => {
+      if (publicKey) {
+        setAccount(publicKey);
+        if (connection) {
+          getADRTokenBalance(connection, new PublicKey(publicKey))
+            .then(balance => setBalance(balance))
+            .catch(error => console.error("Balance fetch error:", error));
+        }
+      } else {
+        setAccount(null);
+        setBalance(null);
+      }
+    };
+
+    const phantom = window.phantom?.solana;
+    if (phantom) {
+      // Set up listener for account changes
+      phantom.on('accountChanged', handleAccountChange);
       
-      // Fetch balance after getting deposit info
-      if (account) {
-        await fetchUserBalance(account)
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to fetch deposit information")
+      // Check initial connection
+      checkConnection();
+      
+      // Clean up listener
+      return () => {
+        phantom.off('accountChanged', handleAccountChange);
+      };
     }
-  }
+  }, [checkConnection, connection]);
 
+  // Handle deposit
   const handleDeposit = async () => {
-    if (!depositInfo || !account) return
-
-    // Validate deposit amount
-    const amount = parseFloat(depositAmount)
-    if (isNaN(amount) || amount < 0.001) {
-      toast.error("Deposit amount must be at least 0.001 ADR")
-      return
+    if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+      toast({
+        title: "유효하지 않은 금액",
+        description: "유효한 금액을 입력해주세요.",
+        variant: "destructive",
+      });
+      return;
     }
 
-    setIsLoading(true)
+    if (!account || !connection) {
+      toast({
+        title: "지갑 연결 필요",
+        description: "먼저 Phantom 지갑을 연결해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
     try {
-      if (!window.ethereum) {
-        throw new Error("HashKey wallet is not installed")
-      }
+      // 입금 대상 주소 (실제 프로젝트에서는 환경 변수나 설정에서 가져오는 것이 좋습니다)
+      const depositAddress = new PublicKey('DepositAddressHere'); // 실제 주소로 교체 필요
+      const userPublicKey = new PublicKey(account);
+      const depositAmount = parseFloat(amount);
 
-      // Switch to HSK network (chain ID needs to be updated for HSK network)
-      await window.ethereum.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: '0xb1' }], // Update with actual HSK network chain ID
-      })
+      // 트랜잭션 생성
+      const transaction = await createTransferTransaction(
+        connection,
+        userPublicKey,
+        depositAddress,
+        depositAmount
+      );
 
-      // Connect wallet
-      const provider = new ethers.providers.Web3Provider(window.ethereum)
-      const signer = provider.getSigner()
-      const contract = new ethers.Contract(depositInfo.deposit_address, HSKDepositABI, signer)
+      // 트랜잭션 서명 및 전송
+      const signature = await signAndSendTransaction(transaction);
 
-      // Convert amount to wei
-      const amountWei = ethers.utils.parseEther(depositAmount)
+      toast({
+        title: "입금 성공",
+        description: `${depositAmount} ADR 토큰이 성공적으로 입금되었습니다.`,
+      });
 
-      // Call deposit function
-      const tx = await contract.deposit({ value: amountWei })
-      toast.info("Transaction submitted. Waiting for confirmation...")
+      // 잔액 업데이트
+      const newBalance = await getADRTokenBalance(connection, userPublicKey);
+      setBalance(newBalance);
 
-      // Wait for transaction confirmation
-      await tx.wait()
+      // 입금 정보를 백엔드에 기록 (필요한 경우)
+      await recordDeposit(account, depositAmount, signature);
 
-      // Notify backend about the successful deposit
-      try {
-        const token = localStorage.getItem("authToken")
-        if (!token) {
-          throw new Error("No authentication token found")
-        }
-
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/deposit/notify`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            tx_hash: tx.hash,
-            tx_type: "deposit"
-          })
-        })
-
-        if (!response.ok) {
-          throw new Error("Failed to notify deposit transaction")
-        }
-      } catch (error) {
-        console.error('Failed to notify backend:', error)
-        toast.error("Failed to notify backend")
-      }
-
-      // Update balance after successful deposit
-      await fetchUserBalance(account)
-
-      toast.success("Deposit successful!")
+      // 입력 필드 초기화
+      setAmount('');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to send transaction")
+      console.error("Deposit error:", error);
+      toast({
+        title: "입금 실패",
+        description: "입금 처리 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
+
+  // Record deposit to backend
+  const recordDeposit = async (walletAddress: string, amount: number, txSignature: string) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/deposits`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          wallet_address: walletAddress,
+          amount: amount,
+          transaction_signature: txSignature,
+          blockchain: 'solana',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to record deposit');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Backend record error:", error);
+      // 백엔드 기록 실패는 사용자에게 알리지 않고 로깅만 합니다.
+      // 이미 블록체인에 트랜잭션이 기록되었기 때문에 중요한 부분은 완료된 상태입니다.
+    }
+  };
 
   return (
-    <div className="bg-white/80 p-6">
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold mb-4 bg-gradient-to-r from-[#9945FF] via-[#00D1FF] to-[#14F195] text-transparent bg-clip-text">
-          Deposit ADR
-        </h1>
-        <p className="text-gray-600 mb-6">Add funds to your account to use OmniScope services.</p>
-
-        <div className="space-y-6">
-          <Card className="bg-gradient-to-br from-[rgba(255,255,255,0.9)] to-[rgba(255,255,255,0.7)] backdrop-blur-xl border border-[rgba(0,0,0,0.08)]">
-            <CardHeader>
-              <CardTitle className="text-gray-800">Current Balance</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold bg-gradient-to-r from-[#9945FF] to-[#14F195] text-transparent bg-clip-text">
-                {userBalance} ADR
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-[rgba(255,255,255,0.9)] to-[rgba(255,255,255,0.7)] backdrop-blur-xl border border-[rgba(0,0,0,0.08)]">
-            <CardHeader>
-              <CardTitle className="text-gray-800">Make a Deposit</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="amount" className="text-gray-700">Amount (ADR)</Label>
-                <div className="relative">
-                  <Input
-                    id="amount"
-                    type="number"
-                    value={depositAmount}
-                    onChange={(e) => setDepositAmount(e.target.value)}
-                    min="0.001"
-                    step="0.001"
-                    className="pr-12"
-                    placeholder="0.0"
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
-                    ADR
-                  </span>
+    <div className="container mx-auto py-8">
+      <h1 className="text-2xl font-bold mb-6">입금하기</h1>
+      
+      <Card className="max-w-md mx-auto">
+        <CardHeader>
+          <CardTitle>ADR 토큰 입금</CardTitle>
+          <CardDescription>
+            Phantom 지갑을 연결하고 ADR 토큰을 입금하세요.
+          </CardDescription>
+        </CardHeader>
+        
+        <CardContent className="space-y-4">
+          {!isConnected ? (
+            <Button 
+              className="w-full" 
+              onClick={connectWallet}
+            >
+              Phantom 지갑 연결하기
+            </Button>
+          ) : (
+            <>
+              <div className="flex flex-col space-y-1.5">
+                <Label htmlFor="wallet-address">지갑 주소</Label>
+                <div className="p-2 border rounded-md bg-muted text-sm font-mono break-all">
+                  {account}
                 </div>
-                <p className="text-sm text-gray-500">Minimum deposit: 0.001 ADR</p>
               </div>
-
-              <Button
-                onClick={handleDeposit}
-                disabled={isLoading || !account}
-                className="w-full"
-              >
-                {isLoading ? (
-                  <>
-                    <span className="animate-spin mr-2">⚡</span>
-                    Processing...
-                  </>
-                ) : !account ? (
-                  "Connect Wallet to Deposit"
-                ) : (
-                  "Deposit ADR"
-                )}
-              </Button>
-
-              {depositInfo && (
-                <div className="mt-4 p-4 rounded-lg bg-gradient-to-r from-[rgba(153,69,255,0.05)] to-[rgba(20,241,149,0.05)] border border-[rgba(0,0,0,0.08)]">
-                  <p className="text-sm text-gray-600">{depositInfo.message}</p>
-                  <p className="text-xs text-gray-500 mt-2">
-                    Contract Address: {depositInfo.deposit_address}
-                  </p>
+              
+              {balance !== null && (
+                <div className="flex flex-col space-y-1.5">
+                  <Label>현재 잔액</Label>
+                  <div className="p-2 border rounded-md bg-muted">
+                    {balance} ADR
+                  </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+              
+              <div className="flex flex-col space-y-1.5">
+                <Label htmlFor="amount">입금 금액 (ADR)</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  placeholder="0.00"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+            </>
+          )}
+        </CardContent>
+        
+        <CardFooter className="flex flex-col space-y-2">
+          {isConnected && (
+            <>
+              <Button 
+                className="w-full" 
+                onClick={handleDeposit}
+                disabled={isLoading || !amount}
+              >
+                {isLoading ? "처리 중..." : "입금하기"}
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="w-full" 
+                onClick={disconnectWallet}
+              >
+                지갑 연결 해제
+              </Button>
+            </>
+          )}
+        </CardFooter>
+      </Card>
     </div>
-  )
-} 
+  );
+}
