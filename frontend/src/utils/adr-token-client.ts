@@ -1,4 +1,4 @@
-import { Connection, PublicKey, Keypair, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { Connection, PublicKey, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { 
   TOKEN_PROGRAM_ID, 
   ASSOCIATED_TOKEN_PROGRAM_ID, 
@@ -49,9 +49,10 @@ export async function getADRTokenBalance(connection: Connection, ownerPublicKey:
       const balance = Number(accountInfo.amount) / Math.pow(10, DECIMALS);
       
       return balance;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // 계정이 존재하지 않으면 0 반환
-      if (error.name === 'TokenAccountNotFoundError') {
+      const typedError = error as { name?: string };
+      if (typedError.name === 'TokenAccountNotFoundError') {
         return 0;
       }
       throw error;
@@ -102,15 +103,15 @@ export async function createTransferTransaction(
     const transaction = new Transaction();
     
     // 받는 사람의 토큰 계정이 존재하는지 확인
-    let recipientTokenAccountInfo;
     try {
-      recipientTokenAccountInfo = await getAccount(
+      await getAccount(
         connection,
         recipientTokenAccount
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       // 계정이 존재하지 않으면 생성
-      if (error.name === 'TokenAccountNotFoundError') {
+      const typedError = error as { name?: string };
+      if (typedError.name === 'TokenAccountNotFoundError') {
         transaction.add(
           createAssociatedTokenAccountInstruction(
             senderPublicKey, // 지불자
@@ -227,9 +228,6 @@ export async function createStakingTransaction(
   amount: number
 ): Promise<Transaction> {
   try {
-    // 금액을 lamports로 변환
-    const amountLamports = Math.floor(amount * Math.pow(10, DECIMALS));
-    
     // 사용자의 토큰 계정 주소 가져오기
     const userTokenAccount = await getAssociatedTokenAddress(
       ADR_TOKEN_MINT,
@@ -296,9 +294,6 @@ export async function createDeductTransaction(
   amount: number
 ): Promise<Transaction> {
   try {
-    // 금액을 lamports로 변환
-    const amountLamports = Math.floor(amount * Math.pow(10, DECIMALS));
-    
     // 사용자의 스테이커 정보 계정 주소 계산
     const [stakerInfoAddress] = await PublicKey.findProgramAddress(
       [userPublicKey.toBuffer(), STAKING_POOL_ADDRESS.toBuffer()],
@@ -351,8 +346,9 @@ export async function createDeductTransaction(
     // 관리자의 토큰 계정이 존재하는지 확인하고 없으면 생성
     try {
       await getAccount(connection, adminTokenAccount);
-    } catch (error: any) {
-      if (error.name === 'TokenAccountNotFoundError') {
+    } catch (error: unknown) {
+      const typedError = error as { name?: string };
+      if (typedError.name === 'TokenAccountNotFoundError') {
         transaction.add(
           createAssociatedTokenAccountInstruction(
             adminPublicKey,

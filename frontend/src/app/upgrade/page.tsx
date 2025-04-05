@@ -1,54 +1,67 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 import { PublicKey, Connection } from '@solana/web3.js';
-import { getConnection, getADRTokenBalance, createTransferTransaction, signAndSendTransaction, stakeTokens } from '@/utils/adr-token-client';
+import { getConnection, getADRTokenBalance, stakeTokens } from '@/utils/adr-token-client';
 
-// 구독 티어 정의
-const TIERS = [
-  { id: 'basic', name: 'Basic', price: 10, features: ['기본 분석', '일일 리포트', '5개 프로젝트 모니터링'] },
-  { id: 'pro', name: 'Professional', price: 50, features: ['고급 분석', '실시간 알림', '무제한 프로젝트 모니터링', '커스텀 대시보드'] },
-  { id: 'enterprise', name: 'Enterprise', price: 200, features: ['AI 기반 예측', '전담 지원', '맞춤형 보고서', 'API 액세스', '무제한 사용자'] }
-];
+// 티어 정보 타입 정의
+interface TierInfo {
+  name: string;
+  description: string;
+  features: string[];
+  price: number;
+  color: string;
+}
 
 export default function UpgradePage() {
-  const [selectedTier, setSelectedTier] = useState<string | null>(null);
   const [account, setAccount] = useState<string | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isConnected, setIsConnected] = useState<boolean>(false);
-  const router = useRouter();
-  const [connection, setConnection] = useState<Connection | null>(null);
+  const [selectedTier, setSelectedTier] = useState<string>('basic');
   const { toast } = useToast();
+  const [connection, setConnection] = useState<Connection | null>(null);
 
-  // Initialize connection
-  useEffect(() => {
-    const conn = getConnection('devnet'); // 'devnet', 'testnet', or 'mainnet-beta'
-    setConnection(conn);
-  }, []);
+  // 티어 정보
+  const tiers: Record<string, TierInfo> = {
+    basic: {
+      name: '기본 티어',
+      description: '기본적인 서비스 이용',
+      features: ['기본 분석 기능', '일일 10회 요청 제한', '기본 대시보드'],
+      price: 50,
+      color: 'bg-blue-100 dark:bg-blue-950',
+    },
+    pro: {
+      name: '프로 티어',
+      description: '전문가를 위한 확장 기능',
+      features: ['고급 분석 기능', '일일 100회 요청', '고급 대시보드', 'API 액세스'],
+      price: 200,
+      color: 'bg-purple-100 dark:bg-purple-950',
+    },
+    enterprise: {
+      name: '엔터프라이즈 티어',
+      description: '기업을 위한 최고급 서비스',
+      features: ['무제한 분석 기능', '무제한 요청', '커스텀 대시보드', '전용 API', '우선 지원'],
+      price: 500,
+      color: 'bg-amber-100 dark:bg-amber-950',
+    },
+  };
 
   // Check wallet connection
   const checkConnection = useCallback(async () => {
     const phantom = window.phantom?.solana;
     if (!phantom) {
-      toast({
-        title: "Phantom 지갑을 찾을 수 없습니다",
-        description: "Phantom 지갑 확장 프로그램을 설치해주세요.",
-        variant: "destructive",
-      });
       return;
     }
 
     try {
-      // Try to connect to get the public key
-      const { publicKey } = await phantom.connect();
-      const address = publicKey.toString();
+      // 이미 연결된 지갑 확인 (자동 연결)
+      const resp = await phantom.connect();
+      const address = resp.publicKey.toString();
       setAccount(address);
-      setIsConnected(true);
 
       // Get balance if connection is available
       if (connection) {
@@ -57,10 +70,17 @@ export default function UpgradePage() {
         setBalance(userBalance);
       }
     } catch (error) {
-      console.error("Connection error:", error);
-      setIsConnected(false);
+      console.error("Auto-connection error:", error);
+      // User not previously connected or connection failed, do nothing
     }
-  }, [toast, connection]);
+  }, [connection, setAccount, setBalance]);
+
+  // Initialize connection
+  useEffect(() => {
+    const conn = getConnection('devnet'); // 'devnet', 'testnet', or 'mainnet-beta'
+    setConnection(conn);
+    checkConnection();
+  }, [checkConnection]);
 
   // Connect wallet
   const connectWallet = async () => {
@@ -78,7 +98,6 @@ export default function UpgradePage() {
       const { publicKey } = await phantom.connect();
       const address = publicKey.toString();
       setAccount(address);
-      setIsConnected(true);
 
       // Get balance if connection is available
       if (connection) {
@@ -108,7 +127,6 @@ export default function UpgradePage() {
       try {
         await phantom.disconnect();
         setAccount(null);
-        setIsConnected(false);
         setBalance(null);
         toast({
           title: "지갑 연결 해제",
@@ -120,43 +138,32 @@ export default function UpgradePage() {
     }
   };
 
-  // Handle account change
-  useEffect(() => {
-    const handleAccountChange = (publicKey: string | undefined) => {
-      if (publicKey) {
-        setAccount(publicKey);
-        if (connection) {
-          getADRTokenBalance(connection, new PublicKey(publicKey))
-            .then(balance => setBalance(balance))
-            .catch(error => console.error("Balance fetch error:", error));
-        }
-      } else {
-        setAccount(null);
-        setBalance(null);
-      }
-    };
-
-    const phantom = window.phantom?.solana;
-    if (phantom) {
-      // Set up listener for account changes
-      phantom.on('accountChanged', handleAccountChange);
-      
-      // Check initial connection
-      checkConnection();
-      
-      // Clean up listener
-      return () => {
-        phantom.off('accountChanged', handleAccountChange);
-      };
-    }
-  }, [checkConnection, connection]);
-
   // Handle upgrade
   const handleUpgrade = async () => {
-    if (!selectedTier || !account || !connection) {
+    if (!account || !connection) {
       toast({
-        title: "업그레이드 실패",
-        description: "지갑 연결 또는 티어 선택이 필요합니다.",
+        title: "지갑 연결 필요",
+        description: "먼저 Phantom 지갑을 연결해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const tierInfo = tiers[selectedTier];
+    if (!tierInfo) {
+      toast({
+        title: "티어 선택 오류",
+        description: "유효한 티어를 선택해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // 잔액 확인
+    if (balance === null || balance < tierInfo.price) {
+      toast({
+        title: "잔액 부족",
+        description: `업그레이드에 필요한 ADR 토큰이 부족합니다. 필요 금액: ${tierInfo.price} ADR`,
         variant: "destructive",
       });
       return;
@@ -165,52 +172,33 @@ export default function UpgradePage() {
     setIsLoading(true);
 
     try {
-      // 선택한 티어의 가격 가져오기
-      const tier = TIERS.find(t => t.id === selectedTier);
-      if (!tier) {
-        throw new Error("Invalid tier selected");
-      }
-
-      // 사용자 잔액 확인
+      // 사용자 공개키 생성
       const userPublicKey = new PublicKey(account);
-      const userBalance = await getADRTokenBalance(connection, userPublicKey);
       
-      if (userBalance < tier.price) {
-        throw new Error(`잔액이 부족합니다. 필요: ${tier.price} ADR, 현재: ${userBalance} ADR`);
-      }
-
-      // 스테이킹 트랜잭션 생성 및 전송 (업그레이드 = 추가 스테이킹)
+      // 스테이킹 트랜잭션 생성 및 전송 (업그레이드에는 deposit 함수 사용)
       const signature = await stakeTokens(
         connection,
         userPublicKey,
-        tier.price
+        tierInfo.price
       );
 
       // 백엔드에 업그레이드 정보 기록
-      await recordUpgrade(account, selectedTier, tier.price, signature);
+      await recordUpgrade(account, selectedTier, tierInfo.price, signature);
 
       toast({
         title: "업그레이드 성공",
-        description: `${tier.name} 티어로 성공적으로 업그레이드되었습니다.`,
+        description: `${tierInfo.name}로 성공적으로 업그레이드되었습니다.`,
       });
 
       // 잔액 업데이트
       const newBalance = await getADRTokenBalance(connection, userPublicKey);
       setBalance(newBalance);
-
-      // 성공 후 처리 - 대시보드 페이지가 없으므로 리디렉션 제거
-      // router.push('/dashboard?upgraded=true');
-      
-      // 대신 토스트 메시지로 안내
-      toast({
-        title: "안내",
-        description: "업그레이드가 완료되었습니다. 이 페이지에서 계속 이용하실 수 있습니다.",
-      });
-    } catch (error: any) {
+    } catch (error) {
       console.error("Upgrade error:", error);
+      const errorMessage = error instanceof Error ? error.message : "업그레이드 처리 중 오류가 발생했습니다.";
       toast({
         title: "업그레이드 실패",
-        description: error.message || "업그레이드 처리 중 오류가 발생했습니다.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -219,31 +207,30 @@ export default function UpgradePage() {
   };
 
   // Record upgrade to backend
-  const recordUpgrade = async (walletAddress: string, tierId: string, amount: number, txSignature: string) => {
+  const recordUpgrade = async (walletAddress: string, tier: string, amount: number, txSignature: string) => {
     try {
       // 백엔드 API 엔드포인트가 설정되어 있지 않을 경우 로그만 남김
       if (!process.env.NEXT_PUBLIC_API_BASE_URL) {
         console.log('백엔드 API 엔드포인트가 설정되지 않았습니다. 업그레이드 기록을 백엔드에 저장하지 않습니다.');
-        console.log('업그레이드 정보:', { wallet_address: walletAddress, tier_id: tierId, amount, transaction_signature: txSignature });
+        console.log('업그레이드 정보:', { wallet_address: walletAddress, tier, amount, transaction_signature: txSignature });
         return;
       }
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/subscriptions`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/upgrades`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           wallet_address: walletAddress,
-          tier_id: tierId,
+          tier: tier,
           amount: amount,
           transaction_signature: txSignature,
-          blockchain: 'solana',
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to record subscription upgrade');
+        throw new Error('Failed to record upgrade');
       }
     } catch (error) {
       console.error("Record upgrade error:", error);
@@ -251,97 +238,89 @@ export default function UpgradePage() {
     }
   };
 
-  // Get tier details
-  const getTierDetails = (tierId: string) => {
-    return TIERS.find(tier => tier.id === tierId);
-  };
-
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold mb-8 text-center">서비스 업그레이드</h1>
       
-      {!isConnected ? (
-        <div className="max-w-md mx-auto mb-8">
-          <Card>
+      <div className="max-w-4xl mx-auto">
+        {!account ? (
+          <Card className="mb-8">
             <CardHeader>
               <CardTitle>지갑 연결</CardTitle>
               <CardDescription>
-                업그레이드하려면 먼저 Phantom 지갑을 연결해주세요.
+                서비스를 업그레이드하려면 먼저 Phantom 지갑을 연결해주세요.
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardFooter>
               <Button onClick={connectWallet} className="w-full">
                 Phantom 지갑 연결하기
               </Button>
-            </CardContent>
+            </CardFooter>
           </Card>
-        </div>
-      ) : (
-        <div className="max-w-md mx-auto mb-8">
-          <Card>
+        ) : (
+          <Card className="mb-8">
             <CardHeader>
               <CardTitle>연결된 지갑</CardTitle>
               <CardDescription>
-                {account?.substring(0, 6)}...{account?.substring(account.length - 4)}
+                {account.substring(0, 10)}...{account.substring(account.length - 10)}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-sm font-medium">현재 잔액</span>
-                <span className="text-sm font-medium">{balance !== null ? `${balance} ADR` : '로딩 중...'}</span>
+              <div className="flex justify-between items-center">
+                <span className="font-medium">ADR 토큰 잔액:</span>
+                <span className="font-bold">{balance !== null ? `${balance} ADR` : '로딩 중...'}</span>
               </div>
-              <Button variant="outline" size="sm" onClick={disconnectWallet} className="w-full">
-                지갑 연결 해제
-              </Button>
             </CardContent>
-          </Card>
-        </div>
-      )}
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {TIERS.map((tier) => (
-          <Card 
-            key={tier.id} 
-            className={`${selectedTier === tier.id ? 'border-primary' : ''}`}
-          >
-            <CardHeader>
-              <CardTitle>{tier.name}</CardTitle>
-              <CardDescription>{tier.price} ADR / 월</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                {tier.features.map((feature, index) => (
-                  <li key={index} className="flex items-center">
-                    <svg className="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-            <CardFooter>
-              <Button 
-                className="w-full" 
-                variant={selectedTier === tier.id ? "default" : "outline"}
-                onClick={() => setSelectedTier(tier.id)}
-                disabled={!isConnected}
-              >
-                {selectedTier === tier.id ? '선택됨' : '선택하기'}
+            <CardFooter className="flex justify-between">
+              <Button variant="outline" onClick={disconnectWallet}>
+                연결 해제
               </Button>
             </CardFooter>
           </Card>
-        ))}
-      </div>
-      
-      <div className="mt-8 text-center">
-        <Button 
-          onClick={handleUpgrade} 
-          disabled={!selectedTier || !isConnected || isLoading}
-          size="lg"
-        >
-          {isLoading ? "처리 중..." : "업그레이드하기"}
-        </Button>
+        )}
+        
+        <Tabs defaultValue="basic" value={selectedTier} onValueChange={setSelectedTier}>
+          <TabsList className="grid grid-cols-3 mb-8">
+            <TabsTrigger value="basic">기본 티어</TabsTrigger>
+            <TabsTrigger value="pro">프로 티어</TabsTrigger>
+            <TabsTrigger value="enterprise">엔터프라이즈 티어</TabsTrigger>
+          </TabsList>
+          
+          {Object.entries(tiers).map(([tierId, tier]) => (
+            <TabsContent key={tierId} value={tierId}>
+              <Card className={`${tier.color} border-0`}>
+                <CardHeader>
+                  <CardTitle>{tier.name}</CardTitle>
+                  <CardDescription className="text-black dark:text-white">
+                    {tier.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold mb-4">{tier.price} ADR</div>
+                  <ul className="space-y-2">
+                    {tier.features.map((feature, index) => (
+                      <li key={index} className="flex items-center">
+                        <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+                <CardFooter>
+                  <Button 
+                    className="w-full" 
+                    onClick={handleUpgrade}
+                    disabled={!account || isLoading || (balance !== null && balance < tier.price)}
+                  >
+                    {isLoading ? "처리 중..." : "업그레이드"}
+                  </Button>
+                </CardFooter>
+              </Card>
+            </TabsContent>
+          ))}
+        </Tabs>
       </div>
     </div>
   );

@@ -1,17 +1,15 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { PublicKey, Connection } from '@solana/web3.js';
-import { getConnection, createTransferTransaction, signAndSendTransaction, getADRTokenBalance, stakeTokens } from '@/utils/adr-token-client';
+import { getConnection, getADRTokenBalance, stakeTokens } from '@/utils/adr-token-client';
 
-// Phantom wallet event types
-type PhantomEvent = 'connect' | 'disconnect' | 'accountChanged'
+// Phantom 지갑 타입 정의
 type PhantomEventCallback = (publicKey: string | null | undefined) => void
 
 export default function DepositPage() {
@@ -21,7 +19,6 @@ export default function DepositPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const { toast } = useToast();
-  const router = useRouter();
   const [connection, setConnection] = useState<Connection | null>(null);
 
   // Initialize connection
@@ -198,11 +195,12 @@ export default function DepositPage() {
 
       // 입력 필드 초기화
       setAmount('');
-    } catch (error: any) {
+    } catch (error) {
       console.error("Deposit error:", error);
+      const errorMessage = error instanceof Error ? error.message : "입금 처리 중 오류가 발생했습니다.";
       toast({
         title: "입금 실패",
-        description: error.message || "입금 처리 중 오류가 발생했습니다.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

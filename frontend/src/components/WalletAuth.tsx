@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Button } from './ui/button';
 import { useWallet } from '@/contexts/WalletContext';
@@ -49,12 +49,30 @@ declare global {
 
 export default function WalletAuth() {
   const { account, setAccount } = useWallet();
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [tokenBalance, setTokenBalance] = useState<number | null>(null);
-  const [isWalletConnected, setIsWalletConnected] = useState(false);
 
   // Initialize wallet connection
+  const checkWalletConnection = useCallback(async () => {
+    try {
+      const phantom = window.phantom?.solana;
+      if (!phantom) return null;
+      
+      try {
+        const resp = await phantom.connect();
+        const address = resp.publicKey.toString();
+        setAccount(address);
+        return address;
+      } catch {
+        // If connect fails, the wallet is not connected
+        return null;
+      }
+    } catch {
+      console.error('Failed to check wallet connection');
+      return null;
+    }
+  }, [setAccount]);
+
   useEffect(() => {
     checkWalletConnection();
     
@@ -63,31 +81,9 @@ export default function WalletAuth() {
     if (token && account) {
       fetchUserBalance(account);
     }
-  }, [account]);
-
-  const checkWalletConnection = async () => {
-    try {
-      const phantom = window.phantom?.solana;
-      if (!phantom) return null;
-      
-      try {
-        const { publicKey } = await phantom.connect();
-        const address = publicKey.toString();
-        setAccount(address);
-        setIsWalletConnected(true);
-        return address;
-      } catch (error) {
-        // If connect fails, the wallet is not connected
-        return null;
-      }
-    } catch (error) {
-      console.error('Failed to check wallet connection:', error);
-      return null;
-    }
-  };
+  }, [account, checkWalletConnection]);
 
   const connectWallet = async () => {
-    setError(null);
     setLoading(true);
     
     try {
@@ -99,14 +95,12 @@ export default function WalletAuth() {
       const { publicKey } = await phantom.connect();
       const address = publicKey.toString();
       setAccount(address);
-      setIsWalletConnected(true);
       
       // Get authentication nonce
       await getNonceAndAuthenticate(address);
       
     } catch (error) {
       console.error('Wallet connection error:', error);
-      setError(error instanceof Error ? error.message : 'Failed to connect wallet');
     } finally {
       setLoading(false);
     }
@@ -122,7 +116,6 @@ export default function WalletAuth() {
       // Clear local auth data
       localStorage.removeItem('authToken');
       setAccount(null);
-      setIsWalletConnected(false);
       setTokenBalance(null);
       
     } catch (error) {
@@ -196,7 +189,6 @@ export default function WalletAuth() {
       
     } catch (error) {
       console.error('Authentication error:', error);
-      setError(error instanceof Error ? error.message : 'Authentication failed');
       throw error;
     }
   };
@@ -226,12 +218,6 @@ export default function WalletAuth() {
 
   return (
     <div className="flex flex-col items-center">
-      {error && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md text-sm">
-          {error}
-        </div>
-      )}
-      
       {!account ? (
         <Button 
           onClick={connectWallet} 
