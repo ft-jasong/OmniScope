@@ -221,57 +221,78 @@ export default function DepositPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-800 p-6">
+    <div className="bg-white/80 p-6">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold mb-4 text-white">Deposit</h1>
-        <p className="text-gray-300 mb-6">Deposit ADR tokens to your account using your HashKey wallet.</p>
-        <Card className="bg-gray-700 border-gray-600">
-          <CardHeader>
-            <CardTitle className="text-white">Deposit Information</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {depositInfo ? (
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-gray-300">Connected Wallet</p>
-                  <p className="font-mono break-all text-white">{account || "Not connected"}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-300">Current Balance</p>
-                  <p className="text-white">{userBalance}</p>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="depositAmount" className="text-gray-300">Deposit Amount (ADR)</Label>
-                  <p className="text-sm text-gray-400">Minimum deposit amount: 0.001 ADR</p>
+        <h1 className="text-2xl font-bold mb-4 bg-gradient-to-r from-[#9945FF] via-[#00D1FF] to-[#14F195] text-transparent bg-clip-text">
+          Deposit ADR
+        </h1>
+        <p className="text-gray-600 mb-6">Add funds to your account to use OmniScope services.</p>
+
+        <div className="space-y-6">
+          <Card className="bg-gradient-to-br from-[rgba(255,255,255,0.9)] to-[rgba(255,255,255,0.7)] backdrop-blur-xl border border-[rgba(0,0,0,0.08)]">
+            <CardHeader>
+              <CardTitle className="text-gray-800">Current Balance</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold bg-gradient-to-r from-[#9945FF] to-[#14F195] text-transparent bg-clip-text">
+                {userBalance} ADR
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-[rgba(255,255,255,0.9)] to-[rgba(255,255,255,0.7)] backdrop-blur-xl border border-[rgba(0,0,0,0.08)]">
+            <CardHeader>
+              <CardTitle className="text-gray-800">Make a Deposit</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="amount" className="text-gray-700">Amount (ADR)</Label>
+                <div className="relative">
                   <Input
-                    id="depositAmount"
+                    id="amount"
                     type="number"
+                    value={depositAmount}
+                    onChange={(e) => setDepositAmount(e.target.value)}
                     min="0.001"
                     step="0.001"
-                    max="1000000"
-                    value={depositAmount}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (value === '' || (parseFloat(value) >= 0.001 && parseFloat(value) <= 1000000)) {
-                        setDepositAmount(value);
-                      }
-                    }}
-                    className="bg-gray-800 border-gray-600 text-white"
+                    className="pr-12"
+                    placeholder="0.0"
                   />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
+                    ADR
+                  </span>
                 </div>
-                <Button
-                  onClick={handleDeposit}
-                  disabled={isLoading || !account}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  {isLoading ? "Processing..." : "Deposit"}
-                </Button>
+                <p className="text-sm text-gray-500">Minimum deposit: 0.001 ADR</p>
               </div>
-            ) : (
-              <p className="text-gray-300">Loading deposit information...</p>
-            )}
-          </CardContent>
-        </Card>
+
+              <Button
+                onClick={handleDeposit}
+                disabled={isLoading || !account}
+                className="w-full"
+              >
+                {isLoading ? (
+                  <>
+                    <span className="animate-spin mr-2">⚡</span>
+                    Processing...
+                  </>
+                ) : !account ? (
+                  "Connect Wallet to Deposit"
+                ) : (
+                  "Deposit ADR"
+                )}
+              </Button>
+
+              {depositInfo && (
+                <div className="mt-4 p-4 rounded-lg bg-gradient-to-r from-[rgba(153,69,255,0.05)] to-[rgba(20,241,149,0.05)] border border-[rgba(0,0,0,0.08)]">
+                  <p className="text-sm text-gray-600">{depositInfo.message}</p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Contract Address: {depositInfo.deposit_address}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   )

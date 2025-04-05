@@ -1,4 +1,4 @@
-import { Home, Flame, Search, Activity, User, Key, Wallet, ChevronsUp } from "lucide-react"
+import { Home, Flame, Search, Activity, User, Key, Wallet, ChevronsUp, Brain } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
@@ -26,6 +26,11 @@ const mainItems = [
     title: "Search APIs",
     url: "/search",
     icon: Search,
+  },
+  {
+    title: "OmniScope AI",
+    url: "/ai",
+    icon: Brain,
   },
   {
     title: "Upgrade",

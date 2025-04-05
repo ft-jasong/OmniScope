@@ -210,23 +210,23 @@ export default function MetaMaskAuth() {
   return (
     <div className="w-full">
       {error && (
-        <div className="mb-6 p-4 bg-red-900/50 rounded-lg">
-          <p className="text-red-200">{error}</p>
+        <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-lg">
+          <p className="text-red-600">{error}</p>
         </div>
       )}
 
       {isMetaMaskConnected && account && (
-        <div className="mb-6 p-4 bg-green-900/50 rounded-lg max-w-md mx-auto">
+        <div className="mb-6 p-4 bg-gradient-to-r from-[rgba(153,69,255,0.05)] to-[rgba(20,241,149,0.05)] backdrop-blur-xl rounded-lg border border-[rgba(0,0,0,0.08)] max-w-md mx-auto">
           <div className="flex items-center space-x-2">
             <div className="relative">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <div className="absolute inset-0 w-2 h-2 bg-green-500 rounded-full animate-ping opacity-75"></div>
+              <div className="w-2 h-2 bg-[#14F195] rounded-full"></div>
+              <div className="absolute inset-0 w-2 h-2 bg-[#14F195] rounded-full animate-ping opacity-75"></div>
             </div>
-            <h3 className="text-green-200 font-medium">Connected Account</h3>
+            <h3 className="text-gray-700 font-medium">Connected Account</h3>
           </div>
-          <p className="text-sm text-green-300 mt-1">{account}</p>
+          <p className="text-sm text-gray-600 mt-1">{account}</p>
           {tokenBalance !== null && (
-            <p className="text-sm text-green-300 mt-1">ADR Balance: {tokenBalance}</p>
+            <p className="text-sm text-gray-600 mt-1">ADR Balance: {tokenBalance}</p>
           )}
         </div>
       )}
@@ -236,7 +236,7 @@ export default function MetaMaskAuth() {
           <button
             onClick={connectAndLogin}
             disabled={loading}
-            className="w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-[#9945FF] via-[#00D1FF] to-[#14F195] rounded-md shadow-sm text-sm font-medium text-white hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
             <Image src="/MetaMask_Fox.svg" alt="MetaMask Fox" className="w-6 h-6 mr-2" width={24} height={24} />
             {loading ? 'Connecting...' : 'Connect & Login with Wallet'}
@@ -245,7 +245,7 @@ export default function MetaMaskAuth() {
           <button
             onClick={logout}
             disabled={loading}
-            className="w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center px-4 py-3 border border-[rgba(0,0,0,0.08)] bg-white rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
             <Image src="/MetaMask_Fox.svg" alt="MetaMask Fox" className="w-6 h-6 mr-2" width={24} height={24} />
             Logout

@@ -13,8 +13,8 @@ const archivo = Archivo({
 });
 
 export const metadata: Metadata = {
-  title: "HashScope",
-  description: "HashScope",
+  title: "OmniScope",
+  description: "OmniScope",
 };
 
 export default function RootLayout({
@@ -24,13 +24,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${archivo.variable} antialiased`}>
+      <body className={`${archivo.variable} antialiased bg-white`}>
         <MetaMaskProviderWrapper>
           <SidebarProvider>
             <AppSidebar />
             <main className="flex-1">
               <TopBar />
-              <div>
+              <div className="min-h-[calc(100vh-4rem)] bg-white/80">
                 {children}
               </div>
             </main>

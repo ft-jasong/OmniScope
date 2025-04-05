@@ -10,22 +10,22 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
+          "bg-gradient-to-r from-[#9945FF] via-[#00D1FF] to-[#14F195] text-white shadow-lg hover:shadow-[0_8px_32px_rgba(153,69,255,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200",
         destructive:
-          "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+          "bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg hover:shadow-[0_8px_32px_rgba(239,68,68,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200",
         outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+          "border border-[rgba(255,255,255,0.15)] bg-[rgba(255,255,255,0.05)] backdrop-blur-xl text-white shadow-lg hover:bg-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)] hover:shadow-[0_8px_32px_rgba(255,255,255,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
+          "bg-gradient-to-r from-[#14F195] via-[#00D1FF] to-[#9945FF] text-white shadow-lg hover:shadow-[0_8px_32px_rgba(20,241,149,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200",
         ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
-        link: "text-primary underline-offset-4 hover:underline",
+          "hover:bg-[rgba(255,255,255,0.05)] text-white hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200",
+        link: "text-white underline-offset-4 hover:underline hover:opacity-90 transition-all duration-200",
       },
       size: {
-        default: "h-9 px-4 py-2 has-[>svg]:px-3",
-        sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
-        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
-        icon: "size-9",
+        default: "h-10 px-5 py-2.5 has-[>svg]:px-4",
+        sm: "h-9 rounded-md gap-1.5 px-4 has-[>svg]:px-3",
+        lg: "h-11 rounded-md px-6 has-[>svg]:px-5",
+        icon: "size-10",
       },
     },
     defaultVariants: {

@@ -14,13 +14,13 @@ export default function Home() {
         <div className="text-center mb-8">
           <Image
             src="/logo-500.png" 
-            alt="HashScope Logo" 
+            alt="OmniScope Logo" 
             className="w-32 h-32 mx-auto mb-6"
             width={128}
             height={128}
           />
           <h1 className="text-4xl sm:text-5xl font-bold text-white mb-6">
-            HashScope
+            OmniScope
           </h1>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8">
             An ADR Chain-based tokenized API platform providing real-time crypto data for Al agents.

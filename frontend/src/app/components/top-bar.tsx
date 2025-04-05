@@ -62,21 +62,21 @@ export function TopBar() {
   };
 
   return (
-    <div className="sticky top-0 z-20 bg-gray-800 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-full items-center justify-between p-4 bg-gray-800">
+    <div className="sticky top-0 z-20 backdrop-blur-xl bg-white/80 border-b border-[rgba(0,0,0,0.08)]">
+      <div className="flex h-full items-center justify-between p-4">
         <div className="flex items-center">
-          <SidebarTrigger className="bg-gray-800 text-white mr-4" />
+          <SidebarTrigger className="text-gray-700 mr-4 hover:opacity-80" />
           <Link href="/" className="flex items-center hover:opacity-90 transition-opacity">
-            <span className="text-gray-100 text-lg sm:text-xl font-semibold">HashScope</span>
+            <span className="bg-gradient-to-r from-[#9945FF] via-[#00D1FF] to-[#14F195] text-transparent bg-clip-text text-lg sm:text-xl font-bold">OmniScope</span>
           </Link>
         </div>
         <div className="flex items-center space-x-4">
           {connected && (
-            <div className="flex items-center space-x-2 bg-gray-700 px-3 py-1.5 rounded-lg">
-              <Coins className="w-4 h-4 text-yellow-400" />
-              <span className="text-white font-medium">
+            <div className="flex items-center space-x-2 bg-white shadow-sm px-3 py-1.5 rounded-lg border border-[rgba(0,0,0,0.08)]">
+              <Coins className="w-4 h-4 text-[#14F195]" />
+              <span className="text-gray-700 font-medium">
                 {isLoading ? (
-                  <Skeleton className="h-4 w-16 bg-gray-600" />
+                  <Skeleton className="h-4 w-16 bg-gray-100" />
                 ) : (
                   `${tokenBalance || '0'} ADR`
                 )}
@@ -84,11 +84,13 @@ export function TopBar() {
             </div>
           )}
           {isLoading ? (
-            <Skeleton className="h-9 w-[120px] bg-gray-700" />
+            <Skeleton className="h-9 w-[120px] bg-gray-100" />
           ) : (
             <Button 
               asChild
-              className="flex items-center justify-center bg-blue-600 text-white px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base rounded-md hover:bg-blue-700 transition-colors"
+              variant="outline"
+              size="sm"
+              className="bg-white/80 border-[rgba(0,0,0,0.08)] text-gray-700 hover:bg-gray-50"
             >
               <Link href="/my/profile">
                 {connected ? (
