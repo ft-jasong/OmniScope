@@ -1,11 +1,30 @@
-# OmniScope MCP - LangChain Tool Integration
+Metadata-Version: 2.1
+Name: hashscope-mcp
+Version: 0.1.0
+Summary: HashScope Model Context Protocol - LangChain Tool Integration
+Home-page: https://github.com/ft-jasong/OmniScope
+Author: HashScope Team
+Author-email: contact@hashscope.ai
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: langchain>=0.0.267
+Requires-Dist: langchain-core>=0.0.10
+Requires-Dist: requests>=2.28.0
+Requires-Dist: python-dotenv>=0.21.0
+Requires-Dist: openai>=0.27.0
+Requires-Dist: pydantic>=1.10.0
 
-OmniScope MCP는 AI Agent가 OmniScope API를 통해 암호화폐 데이터에 쉽게 접근할 수 있도록 하는 LangChain Tool 통합 라이브러리입니다.
+# HashScope MCP - LangChain Tool Integration
+
+HashScope MCP는 AI Agent가 HashScope API를 통해 암호화폐 데이터에 쉽게 접근할 수 있도록 하는 LangChain Tool 통합 라이브러리입니다.
 
 ## 배포 링크
 
-- **API 엔드포인트**: [https://omniscope.sungwoonsong.com/api](https://omniscope.sungwoonsong.com/api)
-- **API 문서**: [https://omniscope.sungwoonsong.com/docs](https://omniscope.sungwoonsong.com/docs)
+- **API 엔드포인트**: [https://hashkey.sungwoonsong.com/api](https://hashkey.sungwoonsong.com/api)
+- **API 문서**: [https://hashkey.sungwoonsong.com/docs](https://hashkey.sungwoonsong.com/docs)
 
 ## 설치 방법
 
@@ -20,14 +39,14 @@ pip install -e .
 ```python
 from langchain.agents import initialize_agent, AgentType
 from langchain.llms import OpenAI
-from omniscope_mcp import OmniScopeToolkit
+from hashscope_mcp import HashScopeToolkit
 
-# OmniScope API 키 설정
+# HashScope API 키 설정
 api_key_id = "hsk_your_api_key_id"
 api_key_secret = "sk_your_api_key_secret"
 
-# OmniScope 도구 초기화 (로컬 서버 사용)
-toolkit = OmniScopeToolkit(api_key_id=api_key_id, api_key_secret=api_key_secret, base_url="https://omniscope.sungwoonsong.com")
+# HashScope 도구 초기화 (로컬 서버 사용)
+toolkit = HashScopeToolkit(api_key_id=api_key_id, api_key_secret=api_key_secret, base_url="https://hashkey.sungwoonsong.com")
 tools = toolkit.get_tools()
 
 # LangChain Agent 초기화
@@ -46,18 +65,18 @@ agent.run("비트코인의 현재 가격과 김치 프리미엄을 알려줘")
 ### 개별 도구 사용
 
 ```python
-from omniscope_mcp import (
+from hashscope_mcp import (
     get_btc_usd_tool,
     get_btc_krw_tool,
     get_kimchi_premium_tool
 )
-from omniscope_mcp.omniscope_client import OmniScopeClient
+from hashscope_mcp.hashscope_client import HashScopeClient
 
-# OmniScope 클라이언트 초기화
-client = OmniScopeClient(
+# HashScope 클라이언트 초기화
+client = HashScopeClient(
     api_key_id="hsk_your_api_key_id",
     api_key_secret="sk_your_api_key_secret",
-    base_url="https://omniscope.sungwoonsong.com"
+    base_url="https://hashkey.sungwoonsong.com"
 )
 
 # 개별 도구 생성
@@ -78,7 +97,7 @@ print(kimchi_premium)
 
 ## 사용 가능한 도구
 
-OmniScope MCP는 다음과 같은 도구를 제공합니다:
+HashScope MCP는 다음과 같은 도구를 제공합니다:
 
 ### 암호화폐 데이터
 1. **get_btc_usd_price**: BTC/USD 가격 조회 (Binance)
@@ -109,14 +128,14 @@ OmniScope MCP는 다음과 같은 도구를 제공합니다:
 ```python
 from langchain.agents import initialize_agent, AgentType
 from langchain.chat_models import ChatOpenAI
-from omniscope_mcp import OmniScopeToolkit
+from hashscope_mcp import HashScopeToolkit
 
 # API 키 설정
 api_key_id = "hsk_your_api_key_id"
 api_key_secret = "sk_your_api_key_secret"
 
-# OmniScope 도구 초기화
-toolkit = OmniScopeToolkit(api_key_id=api_key_id, api_key_secret=api_key_secret, base_url="https://omniscope.sungwoonsong.com")
+# HashScope 도구 초기화
+toolkit = HashScopeToolkit(api_key_id=api_key_id, api_key_secret=api_key_secret, base_url="https://hashkey.sungwoonsong.com")
 tools = toolkit.get_tools()
 
 # LangChain Agent 초기화
@@ -142,9 +161,9 @@ print(response)
 
 ## API 키 발급 방법
 
-OmniScope API 키를 발급받으려면:
+HashScope API 키를 발급받으려면:
 
-1. [OmniScope 웹사이트](https://omniscope.vercel.app/)에 방문하여 계정을 생성합니다.
+1. [HashScope 웹사이트](https://hashscope.vercel.app/)에 방문하여 계정을 생성합니다.
 2. 대시보드에서 "API 키 관리" 섹션으로 이동합니다.
 3. "새 API 키 생성" 버튼을 클릭합니다.
 4. API 키 ID와 시크릿을 안전하게 저장합니다.

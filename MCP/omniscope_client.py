@@ -1,26 +1,26 @@
 """
-HashScope API Client
+OmniScope API Client
 
-This module provides a client for interacting with the HashScope API.
+This module provides a client for interacting with the OmniScope API.
 """
 
 import requests
 from typing import Dict, Any, Optional, List, Union
 import json
 
-class HashScopeClient:
+class OmniScopeClient:
     """
-    Client for interacting with the HashScope API.
+    Client for interacting with the OmniScope API.
     """
     
-    def __init__(self, api_key_id: str, api_key_secret: str, base_url: str = "https://hashkey.sungwoonsong.com/api"):
+    def __init__(self, api_key_id: str, api_key_secret: str, base_url: str = "https://omniscope.sungwoonsong.com/api"):
         """
-        Initialize the HashScope API client.
+        Initialize the OmniScope API client.
         
         Args:
             api_key_id: The API key ID
             api_key_secret: The API key secret
-            base_url: The base URL for the HashScope API (default: https://hashkey.sungwoonsong.com/api)
+            base_url: The base URL for the OmniScope API (default: https://omniscope.sungwoonsong.com/api)
         """
         self.api_key_id = api_key_id
         self.api_key_secret = api_key_secret
@@ -36,7 +36,7 @@ class HashScopeClient:
     def _make_request(self, method: str, endpoint: str, params: Optional[Dict[str, Any]] = None, 
                      data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
-        Make a request to the HashScope API.
+        Make a request to the OmniScope API.
         
         Args:
             method: The HTTP method to use
@@ -73,7 +73,7 @@ class HashScopeClient:
             else:
                 error_message = str(e)
             
-            raise Exception(f"HashScope API error: {error_message}")
+            raise Exception(f"OmniScope API error: {error_message}")
     
     # Crypto Price API
     def get_btc_usd(self) -> Dict[str, Any]:
@@ -105,92 +105,92 @@ class HashScopeClient:
     
     def get_kimchi_premium(self) -> Dict[str, Any]:
         """
-        Get the kimchi premium percentage between Korean and global markets.
+        Get the current Kimchi Premium (difference between BTC price in KRW and USD).
         
         Returns:
-            The current kimchi premium data
+            The current Kimchi Premium data
         """
         return self._make_request('get', '/crypto/kimchi-premium')
     
     # Social Media API
     def get_trump_posts(self) -> Dict[str, Any]:
         """
-        Get Donald Trump's latest posts from Truth Social.
+        Get the latest posts from Donald Trump.
         
         Returns:
-            Latest posts from Donald Trump
+            The latest posts from Donald Trump
         """
         return self._make_request('get', '/social/trump')
     
     def get_elon_posts(self) -> Dict[str, Any]:
         """
-        Get Elon Musk's latest posts from X (Twitter).
+        Get the latest posts from Elon Musk.
         
         Returns:
-            Latest posts from Elon Musk
+            The latest posts from Elon Musk
         """
         return self._make_request('get', '/social/elon')
     
     def get_x_trends(self) -> Dict[str, Any]:
         """
-        Get current trending topics on X (Twitter).
+        Get the current trending topics on X (Twitter).
         
         Returns:
-            Current trending topics on X
+            The current trending topics on X
         """
-        return self._make_request('get', '/social/x/trends')
+        return self._make_request('get', '/social/x-trends')
     
     # Derivatives Market API
     def get_funding_rates(self) -> Dict[str, Any]:
         """
-        Get current funding rates for major cryptocurrency futures markets.
+        Get the current funding rates for cryptocurrency futures.
         
         Returns:
-            Current funding rates data
+            The current funding rates data
         """
         return self._make_request('get', '/derivatives/funding-rates')
     
     def get_open_interest(self) -> Dict[str, Any]:
         """
-        Get open interest ratios for major cryptocurrency derivatives.
+        Get the current open interest for cryptocurrency derivatives.
         
         Returns:
-            Open interest data
+            The current open interest data
         """
         return self._make_request('get', '/derivatives/open-interest')
     
     # Blockchain Projects API
     def get_hsk_updates(self) -> Dict[str, Any]:
         """
-        Get latest updates and developments from HashKey Chain.
+        Get the latest updates from HashKey Chain.
         
         Returns:
-            Latest updates from HashKey Chain
+            The latest updates from HashKey Chain
         """
         return self._make_request('get', '/projects/hsk')
     
     def get_ethereum_standards(self) -> Dict[str, Any]:
         """
-        Get information about new Ethereum standards and proposals.
+        Get information about Ethereum standards and proposals.
         
         Returns:
-            Information about Ethereum standards
+            Information about Ethereum standards and proposals
         """
-        return self._make_request('get', '/projects/ethereum/standards')
+        return self._make_request('get', '/projects/ethereum-standards')
     
     def get_solana_updates(self) -> Dict[str, Any]:
         """
-        Get latest updates and developments from Solana blockchain.
+        Get the latest updates from Solana blockchain.
         
         Returns:
-            Latest updates from Solana blockchain
+            The latest updates from Solana blockchain
         """
         return self._make_request('get', '/projects/solana')
     
     # Open Source API
     def get_bitcoin_activity(self) -> Dict[str, Any]:
         """
-        Get latest pull requests, stars, and activities from Bitcoin Core repository.
+        Get the latest activities from Bitcoin Core.
         
         Returns:
             Latest activities from Bitcoin Core
@@ -199,9 +199,34 @@ class HashScopeClient:
     
     def get_ethereum_activity(self) -> Dict[str, Any]:
         """
-        Get latest pull requests, stars, and activities from Ethereum Core repositories.
+        Get the latest activities from Ethereum Core.
         
         Returns:
             Latest activities from Ethereum Core
         """
         return self._make_request('get', '/opensource/ethereum')
+    
+    # API Catalog
+    def get_api_catalog(self, category: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Get the API catalog from OmniScope.
+        
+        Args:
+            category: Optional category to filter APIs
+            
+        Returns:
+            The API catalog data
+        """
+        params = {}
+        if category:
+            params['category'] = category
+        return self._make_request('get', '/api-catalog', params=params)
+    
+    def get_categories(self) -> Dict[str, Any]:
+        """
+        Get the available API categories from OmniScope.
+        
+        Returns:
+            The API categories data
+        """
+        return self._make_request('get', '/api-catalog/categories')
