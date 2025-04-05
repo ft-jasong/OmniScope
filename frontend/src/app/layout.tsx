@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Archivo } from "next/font/google";
 import "./globals.css";
-import MetaMaskProviderWrapper from "@/components/providers/MetaMaskProviderWrapper";
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/app/components/app-sidebar"
 import { TopBar } from "@/app/components/top-bar"
@@ -26,7 +25,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${archivo.variable} antialiased bg-white`}>
-        <MetaMaskProviderWrapper>
           <WalletProvider>
             <SidebarProvider>
               <AppSidebar />
@@ -39,7 +37,6 @@ export default function RootLayout({
               <Toaster />
             </SidebarProvider>
           </WalletProvider>
-        </MetaMaskProviderWrapper>
       </body>
     </html>
   );

@@ -2,9 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { useSDK } from '@metamask/sdk-react';
 import { Button } from './ui/button';
-import type Web3 from 'web3';
 import { useWallet } from '@/contexts/WalletContext';
 
 interface NonceResponse {
@@ -30,13 +28,6 @@ interface ValidationError {
 
 declare global {
   interface Window {
-    web3: Web3;
-    ethereum: {
-      request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
-      isConnected: () => boolean;
-      on: (eventName: string, callback: (accounts: string[]) => void) => void;
-      removeListener: (eventName: string, callback: (accounts: string[]) => void) => void;
-    };
     phantom?: {
       solana: {
         connect: () => Promise<{ publicKey: { toString: () => string } }>;
@@ -50,7 +41,6 @@ declare global {
 }
 
 export default function WalletAuth() {
-  const { sdk } = useSDK();
   const { account, setAccount } = useWallet();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -61,11 +51,11 @@ export default function WalletAuth() {
   useEffect(() => {
     const initializeWallet = async () => {
       try {
-        // Check MetaMask first
-        if (typeof window.ethereum !== 'undefined') {
-          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-          if (Array.isArray(accounts) && accounts.length > 0) {
-            setAccount(accounts[0]);
+        if (typeof window.phantom?.solana !== 'undefined') {
+          const provider = window.phantom.solana;
+          if (provider.isConnected) {
+            const { publicKey } = await provider.connect();
+            setAccount(publicKey.toString());
             setIsWalletConnected(true);
             return;
           }
@@ -96,17 +86,13 @@ export default function WalletAuth() {
       setLoading(true);
       setError(null);
 
-      if (typeof window.ethereum === 'undefined') {
-        throw new Error('Please install MetaMask!');
+      if (typeof window.phantom?.solana === 'undefined') {
+        throw new Error('Please install Phantom!');
       }
 
-      // Request account access
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      if (!Array.isArray(accounts) || accounts.length === 0) {
-        throw new Error('No accounts found');
-      }
-
-      const newAccount = accounts[0] as string;
+      const provider = window.phantom.solana;
+      const { publicKey } = await provider.connect();
+      const newAccount = publicKey.toString();
       
       // Get nonce from backend
       const nonceResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/nonce`, {
@@ -126,11 +112,9 @@ export default function WalletAuth() {
 
       const nonceData: NonceResponse = await nonceResponse.json();
 
-      // Sign the message using MetaMask
-      const signature = await window.ethereum.request({
-        method: 'personal_sign',
-        params: [nonceData.message, newAccount]
-      }) as string;
+      // Sign the message using Phantom
+      const message = new TextEncoder().encode(nonceData.message);
+      const { signature } = await provider.signMessage(message, 'utf8');
 
       // Verify signature with backend
       const verifyResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/verify`, {
@@ -140,7 +124,7 @@ export default function WalletAuth() {
         },
         body: JSON.stringify({
           wallet_address: newAccount,
-          signature: signature
+          signature: Buffer.from(signature).toString('base64')
         }),
       });
 
@@ -161,7 +145,6 @@ export default function WalletAuth() {
         setTokenBalance(verifyData.token_balance);
       }
     } catch (err) {
-      console.error('Wallet connection error:', err);
       setError(err instanceof Error ? err.message : 'Failed to connect with wallet');
       setIsWalletConnected(false);
       setAccount(null);
@@ -175,7 +158,9 @@ export default function WalletAuth() {
 
   const logout = async () => {
     try {
-      await sdk?.disconnect();
+      if (typeof window.phantom?.solana !== 'undefined') {
+        await window.phantom.solana.disconnect();
+      }
       setAccount(null);
       setTokenBalance(null);
       setIsWalletConnected(false);
