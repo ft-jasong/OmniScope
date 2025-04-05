@@ -2,8 +2,8 @@ import pytest
 import os
 import sys
 from fastapi.testclient import TestClient
-from eth_account import Account
-from eth_account.messages import encode_defunct
+import nacl.signing
+import base58
 import random
 import string
 
@@ -12,18 +12,24 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.main import app
 from app.auth.wallet import create_auth_message
+from solders.pubkey import Pubkey
 
 client = TestClient(app)
 
-def generate_random_address():
-    """테스트용 랜덤 이더리움 주소 생성"""
-    private_key = "0x" + "".join(random.choices(string.hexdigits, k=64)).lower()
-    account = Account.from_key(private_key)
-    return account.address, private_key
+def generate_random_solana_keypair():
+    """테스트용 랜덤 Solana 키페어 생성"""
+    # Generate a new random signing key
+    signing_key = nacl.signing.SigningKey.generate()
+    # Get the verify key (public key)
+    verify_key = signing_key.verify_key
+    # Convert to Solana Pubkey format
+    public_key = Pubkey(bytes(verify_key))
+    
+    return str(public_key), signing_key
 
 def test_get_nonce():
     """인증 nonce 요청 테스트"""
-    wallet_address, _ = generate_random_address()
+    wallet_address, _ = generate_random_solana_keypair()
     
     response = client.post(
         "/auth/nonce",
@@ -34,13 +40,12 @@ def test_get_nonce():
     data = response.json()
     assert "nonce" in data
     assert "message" in data
-    assert data["wallet_address"] == wallet_address.lower()
+    assert data["wallet_address"] == wallet_address
 
 def test_verify_signature():
     """서명 검증 테스트"""
-    # 테스트용 계정 생성
-    wallet_address, private_key = generate_random_address()
-    account = Account.from_key(private_key)
+    # 테스트용 키페어 생성
+    wallet_address, signing_key = generate_random_solana_keypair()
     
     # Nonce 요청
     response = client.post(
@@ -54,9 +59,8 @@ def test_verify_signature():
     message = nonce_data["message"]
     
     # 메시지 서명
-    message_hash = encode_defunct(text=message)
-    signed_message = account.sign_message(message_hash)
-    signature = signed_message.signature.hex()
+    signature_bytes = signing_key.sign(message.encode('utf-8')).signature
+    signature = base58.b58encode(signature_bytes).decode('utf-8')
     
     # 서명 검증
     response = client.post(
@@ -70,12 +74,12 @@ def test_verify_signature():
     assert response.status_code == 200
     token_data = response.json()
     assert "access_token" in token_data
-    assert token_data["wallet_address"] == wallet_address.lower()
+    assert token_data["wallet_address"] == wallet_address
 
 def test_invalid_signature():
     """잘못된 서명 테스트"""
-    # 테스트용 계정 생성
-    wallet_address, _ = generate_random_address()
+    # 테스트용 키페어 생성
+    wallet_address, _ = generate_random_solana_keypair()
     
     # Nonce 요청
     response = client.post(
@@ -86,7 +90,9 @@ def test_invalid_signature():
     assert response.status_code == 200
     
     # 잘못된 서명으로 검증 요청
-    invalid_signature = "0x" + "".join(random.choices(string.hexdigits, k=130)).lower()
+    random_bytes = os.urandom(64)
+    invalid_signature = base58.b58encode(random_bytes).decode('utf-8')
+    
     response = client.post(
         "/auth/verify",
         json={

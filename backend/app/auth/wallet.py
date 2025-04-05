@@ -1,8 +1,9 @@
 import secrets
 import string
-from eth_account.messages import encode_defunct
-from web3 import Web3
-from eth_account import Account
+import base58
+from solders.pubkey import Pubkey
+from nacl.signing import VerifyKey
+from nacl.exceptions import BadSignatureError
 from typing import Optional
 
 def generate_nonce(length: int = 32) -> str:
@@ -20,20 +21,22 @@ def create_auth_message(wallet_address: str, nonce: str) -> str:
 
 def verify_signature(message: str, signature: str, wallet_address: str) -> bool:
     """
-    Verify that the signature was signed by the wallet address
+    Verify that the signature was signed by the Solana wallet address
     """
     try:
-        # Convert wallet address to checksum address
-        wallet_address = Web3.to_checksum_address(wallet_address)
+        # Convert the signature from base64 to bytes
+        signature_bytes = base58.b58decode(signature)
         
-        # Create the message hash that was signed
-        message_hash = encode_defunct(text=message)
+        # Get the public key from the wallet address
+        public_key = Pubkey.from_string(wallet_address)
         
-        # Recover the address from the signature
-        recovered_address = Account.recover_message(message_hash, signature=signature)
+        # Create a VerifyKey from the public key
+        verify_key = VerifyKey(bytes(public_key))
         
-        # Check if the recovered address matches the provided wallet address
-        return recovered_address.lower() == wallet_address.lower()
-    except Exception as e:
+        # Verify the signature against the message
+        verify_key.verify(message.encode('utf-8'), signature_bytes)
+        
+        return True
+    except (BadSignatureError, ValueError, Exception) as e:
         print(f"Signature verification error: {e}")
         return False
