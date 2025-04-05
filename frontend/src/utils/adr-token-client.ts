@@ -16,13 +16,13 @@ export const DECIMALS = 6;
 export const SOLANA_NETWORK = 'devnet';
 export const SOLANA_ENDPOINT = 'https://api.devnet.solana.com';
 
-// ADR 토큰 민트 주소 - 테스트용 임시 주소
-export const ADR_TOKEN_MINT = new PublicKey('Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr');
-// 스테이킹 풀 주소 - 테스트용 임시 주소
+// ADR 토큰 민트 주소 - 새로 생성한 토큰 주소로 업데이트
+export const ADR_TOKEN_MINT = new PublicKey('A4zvfHSVdaS2h5KiShWmgwkQwZGU78mkgxjKzQzYs5cv');
+// 스테이킹 풀 주소 - 배포된 프로그램 ID 사용
 export const STAKING_POOL_ADDRESS = new PublicKey('6yUy54QMKPVx8iGVid1EoqCBGizzf7JRvKEseQb4usFu');
 
 // 로그 메시지: 테스트용 주소 사용
-console.log('테스트용 토큰 민트 및 스테이킹 풀 주소를 사용합니다. 실제 배포 시 변경 필요.');
+console.log('DevNet에서 테스트용 토큰 주소를 사용합니다. 실제 배포 시 변경 필요.');
 
 /**
  * 사용자의 ADR 토큰 잔액을 조회하는 함수
