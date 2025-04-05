@@ -38,60 +38,60 @@ export default function Home() {
           <div className="bg-gray-700 p-6 rounded-lg">
             <div className="flex items-center mb-4">
               <Key className="w-8 h-8 text-blue-500 mr-3" />
-              <h3 className="text-xl font-semibold text-white">Secure API Access</h3>
+              <h3 className="text-xl font-semibold text-white">Token-Gated Access</h3>
             </div>
             <p className="text-gray-300">
-              Stake HSK tokens to receive your secret key and start using our APIs
+              Lock in your HSK tokens to unlock private API keys and start building securely
             </p>
           </div>
 
           <div className="bg-gray-700 p-6 rounded-lg">
             <div className="flex items-center mb-4">
               <LineChart className="w-8 h-8 text-blue-500 mr-3" />
-              <h3 className="text-xl font-semibold text-white">Real-time Data</h3>
+              <h3 className="text-xl font-semibold text-white">Live Market Feeds</h3>
             </div>
             <p className="text-gray-300">
-              Access comprehensive crypto market data for AI predictions and automated trading
+              Tap into real-time crypto data for smarter AI models and automated trading flows
             </p>
           </div>
 
           <div className="bg-gray-700 p-6 rounded-lg">
             <div className="flex items-center mb-4">
               <Coins className="w-8 h-8 text-blue-500 mr-3" />
-              <h3 className="text-xl font-semibold text-white">Pay-as-you-go</h3>
+              <h3 className="text-xl font-semibold text-white">Usage-Based Pricing</h3>
             </div>
             <p className="text-gray-300">
-              Pay only for what you use with our usage-based billing model
+              Only pay for what you use — no flat fees, no surprises
             </p>
           </div>
 
           <div className="bg-gray-700 p-6 rounded-lg">
             <div className="flex items-center mb-4">
               <LineChart className="w-8 h-8 text-blue-500 mr-3" />
-              <h3 className="text-xl font-semibold text-white">API Analytics</h3>
+              <h3 className="text-xl font-semibold text-white">Smart API Insights</h3>
             </div>
             <p className="text-gray-300">
-              Track your API usage, performance metrics, and cost analysis in real-time
+              Monitor usage, track performance, and stay on top of your API spend
             </p>
           </div>
 
           <div className="bg-gray-700 p-6 rounded-lg">
             <div className="flex items-center mb-4">
               <Key className="w-8 h-8 text-blue-500 mr-3" />
-              <h3 className="text-xl font-semibold text-white">API Management</h3>
+              <h3 className="text-xl font-semibold text-white">Key Control Center</h3>
             </div>
             <p className="text-gray-300">
-              Create and manage API keys with customizable request limits
+              Generate and manage API keys with fine-tuned rate limits
             </p>
           </div>
 
           <div className="bg-gray-700 p-6 rounded-lg">
             <div className="flex items-center mb-4">
               <Database className="w-8 h-8 text-blue-500 mr-3" />
-              <h3 className="text-xl font-semibold text-white">Rich API Collection</h3>
+              <h3 className="text-xl font-semibold text-white">Powerful API Suite</h3>
             </div>
             <p className="text-gray-300">
-              Access diverse APIs for market data, social signals, and on-chain analytics
+              Explore a range of APIs covering market data, sentiment signals, and blockchain metrics
             </p>
           </div>
         </div>
