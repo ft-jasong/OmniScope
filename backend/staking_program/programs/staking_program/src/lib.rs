@@ -2,13 +2,13 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 
-declare_id!("5HpQYMJoWoiicn8qnYFCTARaL1JkWht5Dcs1BBHGmJg4");
+declare_id!("6yUy54QMKPVx8iGVid1EoqCBGizzf7JRvKEseQb4usFu");
 
 #[program]
 pub mod adr_token {
     use super::*;
 
-    // ADR 토큰 발행
+    // ADR 토큰 발행 - 최적화된 버전
     pub fn initialize_token(
         ctx: Context<InitializeToken>,
         name: String,
@@ -16,6 +16,10 @@ pub mod adr_token {
         decimals: u8,
         total_supply: u64,
     ) -> Result<()> {
+        // 문자열 길이 제한 검증
+        require!(name.len() <= 32, ErrorCode::NameTooLong);
+        require!(symbol.len() <= 8, ErrorCode::SymbolTooLong);
+        
         // 토큰 메타데이터 설정
         let token_info = &mut ctx.accounts.token_info;
         token_info.name = name;
@@ -145,14 +149,15 @@ pub mod adr_token {
     }
 }
 
-// 계정 구조체 및 컨텍스트 정의
+// 계정 구조체 및 컨텍스트 정의 - 최적화된 버전
 #[derive(Accounts)]
 #[instruction(name: String, symbol: String, decimals: u8, total_supply: u64)]
 pub struct InitializeToken<'info> {
+    // 공간 계산 방식 최적화: 8(discriminator) + 36(name) + 12(symbol) + 1(decimals) + 8(total_supply) + 32(authority)
     #[account(
         init,
         payer = authority,
-        space = TokenInfo::LEN
+        space = 8 + 36 + 12 + 1 + 8 + 32
     )]
     pub token_info: Account<'info, TokenInfo>,
     
@@ -186,7 +191,7 @@ pub struct InitializeStakingPool<'info> {
     #[account(
         init,
         payer = authority,
-        space = StakingPool::LEN,
+        space = 8 + 32 + 32 + 32 + 8 + 8, // 최적화된 공간 계산
         seeds = [token_mint.key().as_ref()],
         bump
     )]
@@ -214,36 +219,29 @@ pub struct InitializeStakingPool<'info> {
 #[instruction(amount: u64)]
 pub struct Stake<'info> {
     #[account(
-        mut,
-        seeds = [token_mint.key().as_ref()],
-        bump
-    )]
-    pub staking_pool: Account<'info, StakingPool>,
-    
-    #[account(
         init_if_needed,
         payer = staker,
-        space = StakerInfo::LEN,
+        space = 8 + 32 + 32 + 8 + 8, // 최적화된 공간 계산
         seeds = [staker.key().as_ref(), staking_pool.key().as_ref()],
         bump
     )]
     pub staker_info: Account<'info, StakerInfo>,
     
-    pub token_mint: Account<'info, Mint>,
+    #[account(mut)]
+    pub staking_pool: Account<'info, StakingPool>,
     
     #[account(
         mut,
-        token::mint = token_mint,
-        token::authority = staking_pool,
-    )]
-    pub staking_vault: Account<'info, TokenAccount>,
-    
-    #[account(
-        mut,
-        token::mint = token_mint,
-        token::authority = staker,
+        constraint = staker_token_account.mint == staking_pool.token_mint,
+        constraint = staker_token_account.owner == staker.key()
     )]
     pub staker_token_account: Account<'info, TokenAccount>,
+    
+    #[account(
+        mut,
+        constraint = staking_vault.key() == staking_pool.staking_vault
+    )]
+    pub staking_vault: Account<'info, TokenAccount>,
     
     #[account(mut)]
     pub staker: Signer<'info>,
@@ -257,40 +255,41 @@ pub struct Stake<'info> {
 pub struct Deduct<'info> {
     #[account(
         mut,
-        seeds = [token_mint.key().as_ref()],
+        seeds = [staker.key().as_ref(), staking_pool.key().as_ref()],
         bump,
-        has_one = authority
+        constraint = staker_info.staker == staker.key(),
+        constraint = staker_info.staking_pool == staking_pool.key()
     )]
-    pub staking_pool: Account<'info, StakingPool>,
+    pub staker_info: Account<'info, StakerInfo>,
     
     #[account(
         mut,
-        seeds = [staker.key().as_ref(), staking_pool.key().as_ref()],
+        seeds = [token_mint.key().as_ref()],
         bump
     )]
-    pub staker_info: Account<'info, StakerInfo>,
+    pub staking_pool: Account<'info, StakingPool>,
     
     pub token_mint: Account<'info, Mint>,
     
     #[account(
         mut,
-        token::mint = token_mint,
-        token::authority = staking_pool,
+        constraint = staking_vault.key() == staking_pool.staking_vault
     )]
     pub staking_vault: Account<'info, TokenAccount>,
     
     #[account(
         mut,
-        token::mint = token_mint,
-        token::authority = authority,
+        constraint = admin_token_account.mint == token_mint.key(),
+        constraint = admin_token_account.owner == admin.key()
     )]
     pub admin_token_account: Account<'info, TokenAccount>,
     
-    /// CHECK: 스테이커 정보를 업데이트하기 위한 스테이커 계정
     pub staker: AccountInfo<'info>,
     
-    #[account(mut)]
-    pub authority: Signer<'info>,
+    #[account(
+        constraint = admin.key() == staking_pool.authority
+    )]
+    pub admin: Signer<'info>,
     
     pub token_program: Program<'info, Token>,
 }
@@ -300,31 +299,32 @@ pub struct Deduct<'info> {
 pub struct Unstake<'info> {
     #[account(
         mut,
+        seeds = [staker.key().as_ref(), staking_pool.key().as_ref()],
+        bump,
+        constraint = staker_info.staker == staker.key(),
+        constraint = staker_info.staking_pool == staking_pool.key()
+    )]
+    pub staker_info: Account<'info, StakerInfo>,
+    
+    #[account(
+        mut,
         seeds = [token_mint.key().as_ref()],
         bump
     )]
     pub staking_pool: Account<'info, StakingPool>,
     
-    #[account(
-        mut,
-        seeds = [staker.key().as_ref(), staking_pool.key().as_ref()],
-        bump
-    )]
-    pub staker_info: Account<'info, StakerInfo>,
-    
     pub token_mint: Account<'info, Mint>,
     
     #[account(
         mut,
-        token::mint = token_mint,
-        token::authority = staking_pool,
+        constraint = staking_vault.key() == staking_pool.staking_vault
     )]
     pub staking_vault: Account<'info, TokenAccount>,
     
     #[account(
         mut,
-        token::mint = token_mint,
-        token::authority = staker,
+        constraint = staker_token_account.mint == token_mint.key(),
+        constraint = staker_token_account.owner == staker.key()
     )]
     pub staker_token_account: Account<'info, TokenAccount>,
     
@@ -334,23 +334,14 @@ pub struct Unstake<'info> {
     pub token_program: Program<'info, Token>,
 }
 
-// 데이터 구조체
+// 데이터 구조체 - 최적화된 버전
 #[account]
 pub struct TokenInfo {
-    pub name: String,
-    pub symbol: String,
+    pub name: String,      // 최대 32자로 제한
+    pub symbol: String,    // 최대 8자로 제한
     pub decimals: u8,
     pub total_supply: u64,
     pub authority: Pubkey,
-}
-
-impl TokenInfo {
-    pub const LEN: usize = 8 + // 식별자
-        4 + 32 + // name (String)
-        4 + 10 + // symbol (String)
-        1 + // decimals
-        8 + // total_supply
-        32; // authority (Pubkey)
 }
 
 #[account]
@@ -362,15 +353,6 @@ pub struct StakingPool {
     pub total_staked: u64,
 }
 
-impl StakingPool {
-    pub const LEN: usize = 8 + // 식별자
-        32 + // authority
-        32 + // token_mint
-        32 + // staking_vault
-        8 + // reward_rate
-        8; // total_staked
-}
-
 #[account]
 pub struct StakerInfo {
     pub staker: Pubkey,
@@ -379,17 +361,13 @@ pub struct StakerInfo {
     pub last_update_time: i64,
 }
 
-impl StakerInfo {
-    pub const LEN: usize = 8 + // 식별자
-        32 + // staker
-        32 + // staking_pool
-        8 + // staked_amount
-        8; // last_update_time
-}
-
-// 에러 코드
+// 에러 코드 - 최적화된 버전
 #[error_code]
 pub enum ErrorCode {
-    #[msg("스테이킹된 금액이 부족합니다")]
+    #[msg("Insufficient staked amount")]
     InsufficientStakedAmount,
+    #[msg("Name too long, maximum 32 characters")]
+    NameTooLong,
+    #[msg("Symbol too long, maximum 8 characters")]
+    SymbolTooLong,
 }

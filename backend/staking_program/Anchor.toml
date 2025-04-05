@@ -1,5 +1,6 @@
 [toolchain]
 anchor_version = "0.28.0"
+solana_version = "1.17.7"
 package_manager = "yarn"
 
 [features]
@@ -7,7 +8,10 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-staking_program = "5HpQYMJoWoiicn8qnYFCTARaL1JkWht5Dcs1BBHGmJg4"
+staking_program = "6yUy54QMKPVx8iGVid1EoqCBGizzf7JRvKEseQb4usFu"
+
+[programs.devnet]
+staking_program = "6yUy54QMKPVx8iGVid1EoqCBGizzf7JRvKEseQb4usFu"
 
 [registry]
 url = "https://api.apr.dev"
