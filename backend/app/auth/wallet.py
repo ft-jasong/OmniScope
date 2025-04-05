@@ -1,6 +1,7 @@
 import secrets
 import string
 import base58
+import base64
 from solders.pubkey import Pubkey
 from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
@@ -24,8 +25,18 @@ def verify_signature(message: str, signature: str, wallet_address: str) -> bool:
     Verify that the signature was signed by the Solana wallet address
     """
     try:
-        # Convert the signature from base64 to bytes
-        signature_bytes = base58.b58decode(signature)
+        # Try to decode the signature - first try base64, then base58
+        try:
+            # Remove any padding if present (Phantom might include it)
+            if signature.endswith('='):
+                signature = signature.rstrip('=')
+            
+            # Try base64 decoding first (Phantom wallet format)
+            signature_bytes = base64.b64decode(signature)
+        except Exception as e:
+            print(f"Base64 decoding failed: {e}, trying base58...")
+            # If base64 fails, try base58 (our test format)
+            signature_bytes = base58.b58decode(signature)
         
         # Get the public key from the wallet address
         public_key = Pubkey.from_string(wallet_address)
