@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { PublicKey, Connection } from '@solana/web3.js';
-import { getConnection, createTransferTransaction, signAndSendTransaction, getADRTokenBalance } from '@/utils/adr-token-client';
+import { getConnection, createTransferTransaction, signAndSendTransaction, getADRTokenBalance, stakeTokens } from '@/utils/adr-token-client';
 
 // Phantom wallet event types
 type PhantomEvent = 'connect' | 'disconnect' | 'accountChanged'
@@ -173,25 +173,20 @@ export default function DepositPage() {
     setIsLoading(true);
 
     try {
-      // 입금 대상 주소 (실제 프로젝트에서는 환경 변수나 설정에서 가져오는 것이 좋습니다)
-      const depositAddress = new PublicKey('DepositAddressHere'); // 실제 주소로 교체 필요
+      // 사용자 공개키 생성
       const userPublicKey = new PublicKey(account);
       const depositAmount = parseFloat(amount);
 
-      // 트랜잭션 생성
-      const transaction = await createTransferTransaction(
+      // 스테이킹 트랜잭션 생성 및 전송
+      const signature = await stakeTokens(
         connection,
         userPublicKey,
-        depositAddress,
         depositAmount
       );
 
-      // 트랜잭션 서명 및 전송
-      const signature = await signAndSendTransaction(transaction);
-
       toast({
         title: "입금 성공",
-        description: `${depositAmount} ADR 토큰이 성공적으로 입금되었습니다.`,
+        description: `${depositAmount} ADR 토큰이 성공적으로 스테이킹되었습니다.`,
       });
 
       // 잔액 업데이트
@@ -203,11 +198,11 @@ export default function DepositPage() {
 
       // 입력 필드 초기화
       setAmount('');
-    } catch (error) {
+    } catch (error: any) {
       console.error("Deposit error:", error);
       toast({
         title: "입금 실패",
-        description: "입금 처리 중 오류가 발생했습니다.",
+        description: error.message || "입금 처리 중 오류가 발생했습니다.",
         variant: "destructive",
       });
     } finally {
@@ -218,6 +213,13 @@ export default function DepositPage() {
   // Record deposit to backend
   const recordDeposit = async (walletAddress: string, amount: number, txSignature: string) => {
     try {
+      // 백엔드 API 엔드포인트가 설정되어 있지 않을 경우 로그만 남김
+      if (!process.env.NEXT_PUBLIC_API_BASE_URL) {
+        console.log('백엔드 API 엔드포인트가 설정되지 않았습니다. 입금 기록을 백엔드에 저장하지 않습니다.');
+        console.log('입금 정보:', { wallet_address: walletAddress, amount, transaction_signature: txSignature });
+        return;
+      }
+      
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/deposits`, {
         method: 'POST',
         headers: {
@@ -234,91 +236,86 @@ export default function DepositPage() {
       if (!response.ok) {
         throw new Error('Failed to record deposit');
       }
-
-      return await response.json();
     } catch (error) {
-      console.error("Backend record error:", error);
-      // 백엔드 기록 실패는 사용자에게 알리지 않고 로깅만 합니다.
-      // 이미 블록체인에 트랜잭션이 기록되었기 때문에 중요한 부분은 완료된 상태입니다.
+      console.error("Record deposit error:", error);
+      // 백엔드 기록 실패는 사용자에게 표시하지 않음 (이미 입금은 성공했기 때문)
     }
   };
 
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-6">입금하기</h1>
+      <h1 className="text-3xl font-bold mb-8 text-center">ADR 토큰 입금</h1>
       
-      <Card className="max-w-md mx-auto">
-        <CardHeader>
-          <CardTitle>ADR 토큰 입금</CardTitle>
-          <CardDescription>
-            Phantom 지갑을 연결하고 ADR 토큰을 입금하세요.
-          </CardDescription>
-        </CardHeader>
-        
-        <CardContent className="space-y-4">
-          {!isConnected ? (
-            <Button 
-              className="w-full" 
-              onClick={connectWallet}
-            >
-              Phantom 지갑 연결하기
-            </Button>
-          ) : (
-            <>
-              <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="wallet-address">지갑 주소</Label>
-                <div className="p-2 border rounded-md bg-muted text-sm font-mono break-all">
-                  {account}
-                </div>
-              </div>
-              
-              {balance !== null && (
-                <div className="flex flex-col space-y-1.5">
-                  <Label>현재 잔액</Label>
-                  <div className="p-2 border rounded-md bg-muted">
-                    {balance} ADR
+      <div className="max-w-md mx-auto">
+        <Card>
+          <CardHeader>
+            <CardTitle>입금하기</CardTitle>
+            <CardDescription>
+              ADR 토큰을 스테이킹하여 서비스를 이용하세요.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {!isConnected ? (
+              <Button onClick={connectWallet} className="w-full mb-4">
+                Phantom 지갑 연결하기
+              </Button>
+            ) : (
+              <>
+                <div className="mb-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium">연결된 지갑</span>
+                    <Button variant="outline" size="sm" onClick={disconnectWallet}>
+                      연결 해제
+                    </Button>
+                  </div>
+                  <div className="p-3 bg-muted rounded-md text-sm font-mono break-all">
+                    {account}
                   </div>
                 </div>
-              )}
-              
-              <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="amount">입금 금액 (ADR)</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  placeholder="0.00"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  min="0"
-                  step="0.01"
-                />
-              </div>
-            </>
-          )}
-        </CardContent>
-        
-        <CardFooter className="flex flex-col space-y-2">
-          {isConnected && (
-            <>
+                
+                <div className="mb-6">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium">현재 잔액</span>
+                    <span className="text-sm font-medium">{balance !== null ? `${balance} ADR` : '로딩 중...'}</span>
+                  </div>
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-primary" 
+                      style={{ width: `${Math.min((balance || 0) / 100 * 100, 100)}%` }}
+                    ></div>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="amount">입금 금액 (ADR)</Label>
+                    <Input
+                      id="amount"
+                      type="number"
+                      placeholder="0.00"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+          </CardContent>
+          <CardFooter>
+            {isConnected && (
               <Button 
+                onClick={handleDeposit} 
                 className="w-full" 
-                onClick={handleDeposit}
                 disabled={isLoading || !amount}
               >
                 {isLoading ? "처리 중..." : "입금하기"}
               </Button>
-              
-              <Button 
-                variant="outline" 
-                className="w-full" 
-                onClick={disconnectWallet}
-              >
-                지갑 연결 해제
-              </Button>
-            </>
-          )}
-        </CardFooter>
-      </Card>
+            )}
+          </CardFooter>
+        </Card>
+      </div>
     </div>
   );
 }

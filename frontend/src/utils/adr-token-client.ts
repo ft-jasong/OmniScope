@@ -1,4 +1,4 @@
-import { Connection, PublicKey, Keypair, SystemProgram, Transaction } from '@solana/web3.js';
+import { Connection, PublicKey, Keypair, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { 
   TOKEN_PROGRAM_ID, 
   ASSOCIATED_TOKEN_PROGRAM_ID, 
@@ -9,16 +9,20 @@ import {
 } from '@solana/spl-token';
 
 // 프로그램 ID와 토큰 소수점 설정
-export const PROGRAM_ID = new PublicKey('5HpQYMJoWoiicn8qnYFCTARaL1JkWht5Dcs1BBHGmJg4');
+export const PROGRAM_ID = new PublicKey('6yUy54QMKPVx8iGVid1EoqCBGizzf7JRvKEseQb4usFu');
 export const DECIMALS = 6;
 
 // 네트워크 설정 - DevNet 사용
 export const SOLANA_NETWORK = 'devnet';
 export const SOLANA_ENDPOINT = 'https://api.devnet.solana.com';
 
-// 임시 토큰 민트 주소 (실제 배포 시 교체 필요)
-// 실제 ADR 토큰 민트 주소가 제공되면 이 값을 교체해야 함
-export const ADR_TOKEN_MINT = new PublicKey('ADRTokenMintAddressHere'); // 실제 토큰 민트 주소로 교체 필요
+// ADR 토큰 민트 주소 - 테스트용 임시 주소
+export const ADR_TOKEN_MINT = new PublicKey('Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr');
+// 스테이킹 풀 주소 - 테스트용 임시 주소
+export const STAKING_POOL_ADDRESS = new PublicKey('6yUy54QMKPVx8iGVid1EoqCBGizzf7JRvKEseQb4usFu');
+
+// 로그 메시지: 테스트용 주소 사용
+console.log('테스트용 토큰 민트 및 스테이킹 풀 주소를 사용합니다. 실제 배포 시 변경 필요.');
 
 /**
  * 사용자의 ADR 토큰 잔액을 조회하는 함수
@@ -192,23 +196,18 @@ export async function stakeTokens(
   amount: number
 ): Promise<string> {
   try {
-    // 스테이킹 풀 주소 (실제 주소로 교체 필요)
-    const stakingPoolAddress = new PublicKey('StakingPoolAddressHere');
-    
-    // 트랜잭션 생성 로직 (실제 스마트 컨트랙트에 맞게 수정 필요)
+    // 스테이킹 트랜잭션 생성
     const transaction = await createStakingTransaction(
       connection,
       userPublicKey,
-      stakingPoolAddress,
+      STAKING_POOL_ADDRESS,
       amount
     );
     
     // 트랜잭션 서명 및 전송
-    const signature = await signAndSendTransaction(transaction);
-    
-    return signature;
+    return await signAndSendTransaction(transaction);
   } catch (error) {
-    console.error('스테이킹 중 오류 발생:', error);
+    console.error('토큰 스테이킹 중 오류 발생:', error);
     throw error;
   }
 }
@@ -221,52 +220,166 @@ export async function stakeTokens(
  * @param {number} amount - 스테이킹할 토큰 양
  * @returns {Promise<Transaction>} - 트랜잭션 객체
  */
-async function createStakingTransaction(
+export async function createStakingTransaction(
   connection: Connection,
   userPublicKey: PublicKey,
   stakingPoolAddress: PublicKey,
   amount: number
 ): Promise<Transaction> {
-  // 금액을 lamports로 변환
-  const amountLamports = Math.floor(amount * Math.pow(10, DECIMALS));
-  
-  // 사용자의 토큰 계정 주소 가져오기
-  const userTokenAccount = await getAssociatedTokenAddress(
-    ADR_TOKEN_MINT,
-    userPublicKey,
-    false,
-    TOKEN_PROGRAM_ID,
-    ASSOCIATED_TOKEN_PROGRAM_ID
-  );
-  
-  // 스테이킹 볼트 PDA (실제 로직에 맞게 수정 필요)
-  const [stakingVault] = await PublicKey.findProgramAddress(
-    [Buffer.from("vault"), stakingPoolAddress.toBuffer()],
-    PROGRAM_ID
-  );
-  
-  // 트랜잭션 객체 생성
-  const transaction = new Transaction();
-  
-  // 스테이킹 명령 추가 (실제 스마트 컨트랙트에 맞게 수정 필요)
-  // 이 부분은 실제 스마트 컨트랙트의 구조에 따라 달라질 수 있음
-  transaction.add(
-    createTransferInstruction(
-      userTokenAccount, // 보내는 계정
-      stakingVault, // 받는 계정 (스테이킹 볼트)
-      userPublicKey, // 소유자
-      amountLamports, // 금액
-      [], // 멀티시그너 (필요 없음)
-      TOKEN_PROGRAM_ID
-    )
-  );
-  
-  // 최근 블록해시 가져오기
-  const { blockhash } = await connection.getLatestBlockhash('confirmed');
-  transaction.recentBlockhash = blockhash;
-  transaction.feePayer = userPublicKey;
-  
-  return transaction;
+  try {
+    // 금액을 lamports로 변환
+    const amountLamports = Math.floor(amount * Math.pow(10, DECIMALS));
+    
+    // 사용자의 토큰 계정 주소 가져오기
+    const userTokenAccount = await getAssociatedTokenAddress(
+      ADR_TOKEN_MINT,
+      userPublicKey,
+      false,
+      TOKEN_PROGRAM_ID,
+      ASSOCIATED_TOKEN_PROGRAM_ID
+    );
+    
+    // 스테이킹 풀의 토큰 계정 주소 가져오기
+    const stakingVaultAddress = await getAssociatedTokenAddress(
+      ADR_TOKEN_MINT,
+      stakingPoolAddress,
+      true, // allowOwnerOffCurve = true for PDA
+      TOKEN_PROGRAM_ID,
+      ASSOCIATED_TOKEN_PROGRAM_ID
+    );
+    
+    // 스테이킹 명령 데이터 생성
+    const data = Buffer.from([0, ...new Uint8Array((new TextEncoder().encode(amount.toString())))]);
+    
+    // 스테이킹 명령 생성
+    const instruction = new TransactionInstruction({
+      keys: [
+        { pubkey: userPublicKey, isSigner: true, isWritable: true },
+        { pubkey: stakingPoolAddress, isSigner: false, isWritable: true },
+        { pubkey: userTokenAccount, isSigner: false, isWritable: true },
+        { pubkey: stakingVaultAddress, isSigner: false, isWritable: true },
+        { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+      ],
+      programId: PROGRAM_ID,
+      data,
+    });
+    
+    // 트랜잭션 객체 생성
+    const transaction = new Transaction();
+    transaction.add(instruction);
+    
+    // 최근 블록해시 가져오기
+    const { blockhash } = await connection.getLatestBlockhash('confirmed');
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = userPublicKey;
+    
+    return transaction;
+  } catch (error) {
+    console.error('스테이킹 트랜잭션 생성 중 오류 발생:', error);
+    throw error;
+  }
+}
+
+/**
+ * 차감(Deduct) 트랜잭션 생성 함수 - 업그레이드 기능에 사용
+ * @param {Connection} connection - Solana 연결 객체
+ * @param {PublicKey} userPublicKey - 사용자의 공개키
+ * @param {PublicKey} adminPublicKey - 관리자의 공개키
+ * @param {number} amount - 차감할 토큰 양
+ * @returns {Promise<Transaction>} - 트랜잭션 객체
+ */
+export async function createDeductTransaction(
+  connection: Connection,
+  userPublicKey: PublicKey,
+  adminPublicKey: PublicKey,
+  amount: number
+): Promise<Transaction> {
+  try {
+    // 금액을 lamports로 변환
+    const amountLamports = Math.floor(amount * Math.pow(10, DECIMALS));
+    
+    // 사용자의 스테이커 정보 계정 주소 계산
+    const [stakerInfoAddress] = await PublicKey.findProgramAddress(
+      [userPublicKey.toBuffer(), STAKING_POOL_ADDRESS.toBuffer()],
+      PROGRAM_ID
+    );
+    
+    // 토큰 민트 계정 주소
+    const tokenMint = ADR_TOKEN_MINT;
+    
+    // 스테이킹 풀의 토큰 계정 주소 가져오기
+    const stakingVaultAddress = await getAssociatedTokenAddress(
+      tokenMint,
+      STAKING_POOL_ADDRESS,
+      true, // allowOwnerOffCurve = true for PDA
+      TOKEN_PROGRAM_ID,
+      ASSOCIATED_TOKEN_PROGRAM_ID
+    );
+    
+    // 관리자의 토큰 계정 주소 가져오기
+    const adminTokenAccount = await getAssociatedTokenAddress(
+      tokenMint,
+      adminPublicKey,
+      false,
+      TOKEN_PROGRAM_ID,
+      ASSOCIATED_TOKEN_PROGRAM_ID
+    );
+    
+    // 차감 명령 데이터 생성
+    const data = Buffer.from([3, ...new Uint8Array((new TextEncoder().encode(amount.toString())))]);
+    
+    // 차감 명령 생성
+    const instruction = new TransactionInstruction({
+      keys: [
+        { pubkey: stakerInfoAddress, isSigner: false, isWritable: true },
+        { pubkey: STAKING_POOL_ADDRESS, isSigner: false, isWritable: true },
+        { pubkey: tokenMint, isSigner: false, isWritable: false },
+        { pubkey: stakingVaultAddress, isSigner: false, isWritable: true },
+        { pubkey: adminTokenAccount, isSigner: false, isWritable: true },
+        { pubkey: userPublicKey, isSigner: false, isWritable: false },
+        { pubkey: adminPublicKey, isSigner: true, isWritable: false },
+        { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+      ],
+      programId: PROGRAM_ID,
+      data,
+    });
+    
+    // 트랜잭션 객체 생성
+    const transaction = new Transaction();
+    
+    // 관리자의 토큰 계정이 존재하는지 확인하고 없으면 생성
+    try {
+      await getAccount(connection, adminTokenAccount);
+    } catch (error: any) {
+      if (error.name === 'TokenAccountNotFoundError') {
+        transaction.add(
+          createAssociatedTokenAccountInstruction(
+            adminPublicKey,
+            adminTokenAccount,
+            adminPublicKey,
+            tokenMint,
+            TOKEN_PROGRAM_ID,
+            ASSOCIATED_TOKEN_PROGRAM_ID
+          )
+        );
+      } else {
+        throw error;
+      }
+    }
+    
+    transaction.add(instruction);
+    
+    // 최근 블록해시 가져오기
+    const { blockhash } = await connection.getLatestBlockhash('confirmed');
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = adminPublicKey;
+    
+    return transaction;
+  } catch (error) {
+    console.error('차감 트랜잭션 생성 중 오류 발생:', error);
+    throw error;
+  }
 }
 
 /**
@@ -277,13 +390,17 @@ async function createStakingTransaction(
 export function getConnection(network: string = SOLANA_NETWORK): Connection {
   let endpoint;
   
-  if (network === 'mainnet-beta') {
-    endpoint = 'https://api.mainnet-beta.solana.com';
-  } else if (network === 'testnet') {
-    endpoint = 'https://api.testnet.solana.com';
-  } else {
-    // 기본값은 devnet
-    endpoint = SOLANA_ENDPOINT;
+  switch (network) {
+    case 'mainnet-beta':
+      endpoint = 'https://api.mainnet-beta.solana.com';
+      break;
+    case 'testnet':
+      endpoint = 'https://api.testnet.solana.com';
+      break;
+    case 'devnet':
+    default:
+      endpoint = SOLANA_ENDPOINT;
+      break;
   }
   
   return new Connection(endpoint, 'confirmed');
