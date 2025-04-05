@@ -6,6 +6,7 @@ import { SidebarProvider } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/app/components/app-sidebar"
 import { TopBar } from "@/app/components/top-bar"
 import { Toaster } from "@/components/ui/sonner"
+import { WalletProvider } from "@/contexts/WalletContext";
 
 const archivo = Archivo({
   variable: "--font-archivo",
@@ -26,16 +27,18 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${archivo.variable} antialiased bg-white`}>
         <MetaMaskProviderWrapper>
-          <SidebarProvider>
-            <AppSidebar />
-            <main className="flex-1">
-              <TopBar />
-              <div className="min-h-[calc(100vh-4rem)] bg-white/80">
-                {children}
-              </div>
-            </main>
-            <Toaster />
-          </SidebarProvider>
+          <WalletProvider>
+            <SidebarProvider>
+              <AppSidebar />
+              <main className="flex-1">
+                <TopBar />
+                <div className="min-h-[calc(100vh-4rem)] bg-white/80">
+                  {children}
+                </div>
+              </main>
+              <Toaster />
+            </SidebarProvider>
+          </WalletProvider>
         </MetaMaskProviderWrapper>
       </body>
     </html>

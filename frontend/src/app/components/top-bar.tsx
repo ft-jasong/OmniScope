@@ -2,27 +2,27 @@
 
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import Image from 'next/image';
-import { useSDK } from '@metamask/sdk-react';
 import { formatAddress } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import Link from "next/link";
 import { Coins } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Skeleton } from "@/components/ui/skeleton";
+import { useWallet } from '@/contexts/WalletContext';
 
 export function TopBar() {
-  const { connected, account } = useSDK();
+  const { account } = useWallet();
   const [tokenBalance, setTokenBalance] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (connected && account) {
+    if (account) {
       fetchUserBalance(account);
     } else {
       setTokenBalance(null);
       setIsLoading(false);
     }
-  }, [connected, account]);
+  }, [account]);
 
   const fetchUserBalance = async (userAddress: string) => {
     try {
@@ -71,7 +71,7 @@ export function TopBar() {
           </Link>
         </div>
         <div className="flex items-center space-x-4">
-          {connected && (
+          {account && (
             <div className="flex items-center space-x-2 bg-white shadow-sm px-3 py-1.5 rounded-lg border border-[rgba(0,0,0,0.08)]">
               <Coins className="w-4 h-4 text-[#14F195]" />
               <span className="text-gray-700 font-medium">
@@ -93,9 +93,9 @@ export function TopBar() {
               className="bg-white/80 border-[rgba(0,0,0,0.08)] text-gray-700 hover:bg-gray-50"
             >
               <Link href="/my/profile">
-                {connected ? (
+                {account ? (
                   <>
-                    {formatAddress(account)} <Image src="/MetaMask_Fox.svg" alt="MetaMask Fox" className="inline-block w-4 h-4 ml-2" width={20} height={20} />
+                    {formatAddress(account)} <Image src="/phantom.svg" alt="Phantom" className="inline-block w-4 h-4 ml-2" width={20} height={20} />
                   </>
                 ) : (
                   'Sign In'
