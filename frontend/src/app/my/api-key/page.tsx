@@ -149,7 +149,7 @@ export default function SecretPage() {
 
   if (!connected) {
     return (
-      <div className="min-h-screen bg-gray-800 p-6">
+      <div className="min-h-screen bg-background p-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4 text-white">Please connect your wallet</h1>

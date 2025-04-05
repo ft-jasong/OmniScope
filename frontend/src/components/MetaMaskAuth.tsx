@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useSDK } from '@metamask/sdk-react';
 import type Web3 from 'web3';
+import { Button } from './ui/button';
 
 interface NonceResponse {
   wallet_address: string;
@@ -233,23 +234,24 @@ export default function MetaMaskAuth() {
 
       <section className="space-y-4 max-w-md mx-auto">
         {!isMetaMaskConnected ? (
-          <button
+          <Button
             onClick={connectAndLogin}
             disabled={loading}
-            className="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-[#9945FF] via-[#00D1FF] to-[#14F195] rounded-md shadow-sm text-sm font-medium text-white hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            className="w-full hover:cursor-pointer"
           >
             <Image src="/MetaMask_Fox.svg" alt="MetaMask Fox" className="w-6 h-6 mr-2" width={24} height={24} />
             {loading ? 'Connecting...' : 'Connect & Login with Wallet'}
-          </button>
+          </Button>
         ) : (
-          <button
+          <Button
             onClick={logout}
             disabled={loading}
-            className="w-full flex items-center justify-center px-4 py-3 border border-[rgba(0,0,0,0.08)] bg-white rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            variant="outline"
+            className="w-full hover:cursor-pointer text-gray-700 hover:bg-gray-100"
           >
             <Image src="/MetaMask_Fox.svg" alt="MetaMask Fox" className="w-6 h-6 mr-2" width={24} height={24} />
             Logout
-          </button>
+          </Button>
         )}
       </section>
     </div>
