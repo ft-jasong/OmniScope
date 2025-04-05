@@ -69,32 +69,36 @@ export default function HotPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-800 p-6 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+      <div className="min-h-[calc(100vh-4rem)] bg-white/80 p-6 flex items-center justify-center">
+        <div className="text-gray-600">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-800 p-6">
+    <div className="min-h-[calc(100vh-4rem)] bg-white/80 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Dynamic Trending Section */}
         <div className="relative mb-12">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-lg blur-xl"></div>
-          <div className="relative bg-gray-700/50 rounded-lg p-8 backdrop-blur-sm">
+          <div className="absolute inset-0 bg-gradient-to-r from-[#9945FF]/20 via-[#00D1FF]/20 to-[#14F195]/20 rounded-lg blur-3xl"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-[#9945FF]/10 via-[#00D1FF]/10 to-[#14F195]/10 rounded-lg blur-xl"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-[#9945FF]/5 via-[#00D1FF]/5 to-[#14F195]/5 rounded-lg blur-lg"></div>
+          <div className="relative bg-white/80 rounded-lg p-8 backdrop-blur-sm border border-[rgba(0,0,0,0.08)]">
             <div className="flex items-center space-x-2 mb-4">
-              <Flame className="w-5 h-5 text-orange-400" />
-              <div className="text-xl text-white font-medium">Popular APIs</div>
+              <div className="pr-2 rounded-lg">
+                <Flame className="w-5 h-5 text-[#9945FF]" />
+              </div>
+              <div className="text-xl font-medium bg-gradient-to-r from-[#9945FF] to-[#14F195] text-transparent bg-clip-text">Popular APIs</div>
             </div>
             <div className="space-y-3">
               {apis.slice(0, 5).map((api, index) => (
                 <div key={api.path} className="flex items-center space-x-3 group">
-                  <div className="text-lg font-bold text-gray-400 w-6">{index + 1}</div>
+                  <div className="text-lg font-bold bg-gradient-to-r from-[#9945FF] to-[#14F195] text-transparent bg-clip-text w-6">{index + 1}</div>
                   <div className="flex-1">
-                    <div className="text-white group-hover:text-orange-400 transition-colors">
+                    <div className="text-gray-700 group-hover:bg-gradient-to-r group-hover:from-[#9945FF] group-hover:to-[#14F195] group-hover:text-transparent group-hover:bg-clip-text transition-all">
                       {api.summary}
                     </div>
-                    <div className="text-sm text-gray-400">{api.category}</div>
+                    <div className="text-sm text-gray-500">{api.category}</div>
                   </div>
                 </div>
               ))}
@@ -104,19 +108,19 @@ export default function HotPage() {
 
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-white">Trending APIs</h1>
-            <p className="text-gray-400 mt-2">Most popular and fastest growing APIs this week</p>
+            <h1 className="text-3xl font-bold text-gray-700">Trending APIs</h1>
+            <p className="text-gray-500 mt-2">Most popular and fastest growing APIs this week</p>
           </div>
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-[200px] bg-gray-700 text-white border-gray-600">
+            <SelectTrigger className="w-[200px] bg-white text-gray-700 border-[rgba(0,0,0,0.08)] focus:ring-2 focus:ring-[#9945FF] focus:border-transparent">
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
-            <SelectContent className="bg-gray-700 border-gray-600">
+            <SelectContent className="bg-white border-[rgba(0,0,0,0.08)]">
               <SelectGroup>
-                <SelectLabel className="text-gray-400">Categories</SelectLabel>
-                <SelectItem value="all" className="text-white hover:bg-gray-600">All Categories</SelectItem>
+                <SelectLabel className="text-gray-500">Categories</SelectLabel>
+                <SelectItem value="all" className="text-gray-700 hover:bg-[rgba(153,69,255,0.05)]">All Categories</SelectItem>
                 {Object.entries(categories).map(([key, value]) => (
-                  <SelectItem key={key} value={key} className="text-white hover:bg-gray-600">
+                  <SelectItem key={key} value={key} className="text-gray-700 hover:bg-[rgba(153,69,255,0.05)]">
                     {value}
                   </SelectItem>
                 ))}
@@ -129,25 +133,25 @@ export default function HotPage() {
           {paginatedAPIs.map((api, index) => (
             <div
               key={api.path}
-              className="bg-gray-700 rounded-lg p-6 hover:bg-gray-600 transition-colors"
+              className="bg-white rounded-lg p-6 border border-[rgba(0,0,0,0.08)] hover:shadow-md transition-all"
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400">
+                  <div className="p-2 bg-[rgba(153,69,255,0.1)] rounded-lg text-[#9945FF]">
                     {getCategoryIcon(api.category)}
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-white">{api.summary}</h3>
-                    <p className="text-sm text-gray-400">{api.category}</p>
+                    <h3 className="text-lg font-semibold text-gray-700">{api.summary}</h3>
+                    <p className="text-sm text-gray-500">{api.category}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-gray-400">
+                  <div className="text-2xl font-bold text-gray-500">
                     #{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
                   </div>
                 </div>
               </div>
-              <p className="mt-4 text-gray-300">
+              <p className="mt-4 text-gray-600">
                 {api.description.split('Returns:').map((part, index) => (
                   <React.Fragment key={index}>
                     {index > 0 && <br />}
@@ -156,8 +160,8 @@ export default function HotPage() {
                 ))}
               </p>
               <div className="mt-4">
-                <div className="text-sm text-gray-400">
-                  Path: <span className="text-white">{api.path}</span>
+                <div className="text-sm text-gray-500">
+                  Path: <span className="text-gray-700">{api.path}</span>
                 </div>
               </div>
             </div>

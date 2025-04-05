@@ -104,7 +104,7 @@ export function UsageTable() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-white">Loading API keys...</div>
+        <div className="text-gray-600">Loading API keys...</div>
       </div>
     );
   }
@@ -112,20 +112,20 @@ export function UsageTable() {
   if (error) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-red-500">{error}</div>
+        <div className="text-red-600">{error}</div>
       </div>
     );
   }
 
   return (
-    <div className="rounded-md border border-gray-700">
+    <div className="rounded-md border border-[rgba(0,0,0,0.08)]">
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id} className="bg-gray-700">
+            <TableRow key={headerGroup.id} className="bg-gradient-to-r from-[rgba(153,69,255,0.05)] to-[rgba(20,241,149,0.05)]">
               {headerGroup.headers.map((header) => {
                 return (
-                  <TableHead key={header.id} className="text-white">
+                  <TableHead key={header.id} className="text-gray-700 font-semibold">
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -144,10 +144,10 @@ export function UsageTable() {
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
-                className="bg-gray-800 text-white hover:bg-gray-700"
+                className="bg-white hover:bg-gradient-to-r hover:from-[rgba(153,69,255,0.02)] hover:to-[rgba(20,241,149,0.02)] transition-colors"
               >
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="py-4">
+                  <TableCell key={cell.id} className="py-4 text-gray-700">
                     {flexRender(
                       cell.column.columnDef.cell,
                       cell.getContext()
@@ -160,7 +160,7 @@ export function UsageTable() {
             <TableRow>
               <TableCell
                 colSpan={columns.length}
-                className="h-24 text-center text-white"
+                className="h-24 text-center text-gray-500"
               >
                 No API keys found.
               </TableCell>

@@ -4,7 +4,7 @@
 @config "../../tailwind.config.ts";
 
 :root {
-  --background: #ffffff;
+  --background: rgba(20, 20, 20, 0.95);
   --foreground: #171717;
   --content-background: rgba(255, 255, 255, 0.5);
   --sidebar: rgba(20, 20, 20, 0.95);

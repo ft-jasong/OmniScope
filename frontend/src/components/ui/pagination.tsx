@@ -15,7 +15,7 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Pagination
         size="sm"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600 disabled:opacity-50"
+        className="bg-white border-[rgba(0,0,0,0.08)] text-gray-700 hover:bg-[rgba(153,69,255,0.05)] disabled:opacity-50 disabled:hover:bg-white"
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
@@ -29,8 +29,8 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Pagination
             onClick={() => onPageChange(page)}
             className={`${
               currentPage === page
-                ? "bg-blue-600 text-white hover:bg-blue-700"
-                : "bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
+                ? "bg-[#9945FF] text-white hover:bg-[#8A3EE8]"
+                : "bg-white border-[rgba(0,0,0,0.08)] text-gray-700 hover:bg-[rgba(153,69,255,0.05)]"
             }`}
           >
             {page}
@@ -43,7 +43,7 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Pagination
         size="sm"
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600 disabled:opacity-50"
+        className="bg-white border-[rgba(0,0,0,0.08)] text-gray-700 hover:bg-[rgba(153,69,255,0.05)] disabled:opacity-50 disabled:hover:bg-white"
       >
         <ChevronRight className="h-4 w-4" />
       </Button>

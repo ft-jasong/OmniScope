@@ -16,7 +16,7 @@ interface TierInfo {
 const tiers: TierInfo[] = [
   {
     name: 'Gold',
-    color: 'from-yellow-400 to-yellow-600',
+    color: 'from-[#FFD700] via-[#FFA500] to-[#FF8C00]',
     price: 50,
     rateLimit: 1000,
     minBalance: 10000,
@@ -24,7 +24,7 @@ const tiers: TierInfo[] = [
   },
   {
     name: 'Silver',
-    color: 'from-gray-400 to-gray-600',
+    color: 'from-[#C0C0C0] via-[#A9A9A9] to-[#808080]',
     price: 70,
     rateLimit: 500,
     minBalance: 5000,
@@ -32,7 +32,7 @@ const tiers: TierInfo[] = [
   },
   {
     name: 'Bronze',
-    color: 'from-amber-700 to-amber-900',
+    color: 'from-[#CD7F32] via-[#B87333] to-[#8B4513]',
     price: 100,
     rateLimit: 100,
     minBalance: 0,
@@ -114,61 +114,67 @@ export default function UpgradePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-800 p-6">
+    <div className="min-h-[calc(100vh-4rem)] bg-white/80 p-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-2xl font-semibold text-white mb-8">Usage Tiers</h1>
+        <h1 className="text-2xl font-semibold mb-8 bg-gradient-to-r from-[#9945FF] via-[#00D1FF] to-[#14F195] text-transparent bg-clip-text">
+          Usage Tiers
+        </h1>
         
         {/* Tier Boxes */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
           {tiers.map((tier) => (
             <div
               key={tier.name}
-              className={`relative bg-gradient-to-b ${tier.color} rounded-lg p-6 shadow-lg transform transition-transform hover:scale-105 ${
-                currentTier === tier.name ? 'ring-4 ring-white' : ''
+              className={`relative bg-gradient-to-br from-[rgba(255,255,255,0.9)] to-[rgba(255,255,255,0.7)] backdrop-blur-xl border border-[rgba(0,0,0,0.08)] rounded-lg p-6 shadow-sm transform transition-all hover:scale-105 ${
+                currentTier === tier.name ? 'ring-2 ring-[#9945FF]' : ''
               }`}
             >
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                <div className="bg-white text-gray-900 px-4 py-1 rounded-full text-sm font-semibold">
+                <div className={`bg-gradient-to-r ${tier.color} text-white px-4 py-1 rounded-full text-sm font-semibold`}>
                   {tier.name}
                 </div>
               </div>
-              <div className="mt-4 text-white">
-                <h3 className="text-xl font-bold mb-4">{tier.name} Tier</h3>
+              <div className="mt-4">
+                <h3 className={`text-xl font-bold mb-4 bg-gradient-to-r ${tier.color} text-transparent bg-clip-text`}>
+                  {tier.name} Tier
+                </h3>
                 <div className="space-y-3">
-                  <p className="flex justify-between">
+                  <p className="flex justify-between text-gray-600">
                     <span>Usage Fee:</span>
-                    <span className="font-semibold">{tier.price}%</span>
+                    <span className="font-semibold text-gray-700">{tier.price}%</span>
                   </p>
-                  <p className="flex justify-between">
+                  <p className="flex justify-between text-gray-600">
                     <span>Request Limit:</span>
-                    <span className="font-semibold">{tier.rateLimit}/min</span>
+                    <span className="font-semibold text-gray-700">{tier.rateLimit}/min</span>
                   </p>
-                  <p className="flex justify-between">
+                  <p className="flex justify-between text-gray-600">
                     <span>Min Balance:</span>
-                    <span className="font-semibold">{tier.minBalance}</span>
+                    <span className="font-semibold text-gray-700">{tier.minBalance}</span>
                   </p>
                 </div>
-                <p className="mt-4 text-sm opacity-90">{tier.description}</p>
+                <p className="mt-4 text-sm text-gray-500">{tier.description}</p>
               </div>
             </div>
           ))}
         </div>
 
         {/* User Balance Section */}
-        <div className="bg-gray-700 rounded-lg p-6 mb-8">
+        <div className="bg-gradient-to-br from-[rgba(255,255,255,0.9)] to-[rgba(255,255,255,0.7)] backdrop-blur-xl border border-[rgba(0,0,0,0.08)] rounded-lg p-6 mb-8 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-white mb-2">Your Current Balance</h2>
+              <h2 className="text-xl font-semibold text-gray-700 mb-2">Your Current Balance</h2>
               <div className="flex items-center space-x-2">
-                <Coins className="w-6 h-6 text-yellow-400" />
-                <span className="text-2xl font-bold text-white">
+                <Coins className="w-6 h-6 text-[#9945FF]" />
+                <span className="text-2xl font-bold text-gray-700">
                   {account ? `${tokenBalance}` : 'Connect Wallet'}
                 </span>
               </div>
             </div>
             <div className="text-right">
-              <p className="text-gray-300">Current Tier</p>
-              <span className="text-xl font-bold text-white">{currentTier}</span>
+              <p className="text-gray-500">Current Tier</p>
+              <span className="text-xl font-bold bg-gradient-to-r from-[#9945FF] via-[#00D1FF] to-[#14F195] text-transparent bg-clip-text">
+                {currentTier}
+              </span>
             </div>
           </div>
         </div>
@@ -177,7 +183,7 @@ export default function UpgradePage() {
         <div className="text-center">
           <Link
             href="/my/deposit"
-            className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-lg transition-colors"
+            className="inline-flex items-center bg-gradient-to-r from-[#9945FF] via-[#00D1FF] to-[#14F195] hover:from-[#8a3de8] hover:via-[#00b8e6] hover:to-[#12d985] text-white px-8 py-4 text-lg font-semibold rounded-lg transition-all hover:shadow-lg"
           >
             Deposit and upgrade your tier now
             <ArrowRight className="ml-2 w-5 h-5" />

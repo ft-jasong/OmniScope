@@ -1,4 +1,4 @@
-# HashScope Frontend
+# OmniScope Frontend
 
 ## Running the app
 

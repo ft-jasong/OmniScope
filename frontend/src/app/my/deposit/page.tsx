@@ -88,7 +88,7 @@ export default function DepositPage() {
         toast.error("Failed to connect wallet")
       }
     } else {
-      toast.error("Please install HashKey wallet")
+      toast.error("Please install wallet")
     }
   }
 

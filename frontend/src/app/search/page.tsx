@@ -77,40 +77,40 @@ export default function SearchPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-800 p-6 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+      <div className="min-h-screen bg-white/80 p-6 flex items-center justify-center">
+        <div className="text-gray-600">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-800 p-6">
+    <div className="min-h-[calc(100vh-4rem)] bg-white/80 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Search and Filter Section */}
         <div className="mb-8 space-y-4">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Search className="absolute left-3 top-1/2 z-50 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <Input
                   type="text"
                   placeholder="Search APIs by name or description..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
+                  className="pl-10 bg-white border-[rgba(0,0,0,0.08)] text-gray-700 placeholder:text-gray-400 focus:ring-2 focus:ring-[#9945FF] focus:border-transparent"
                 />
               </div>
             </div>
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-[200px] bg-gray-700 text-white border-gray-600">
+              <SelectTrigger className="w-[200px] bg-white text-gray-700 border-[rgba(0,0,0,0.08)] focus:ring-2 focus:ring-[#9945FF] focus:border-transparent">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
-              <SelectContent className="bg-gray-700 border-gray-600">
+              <SelectContent className="bg-white border-[rgba(0,0,0,0.08)]">
                 <SelectGroup>
-                  <SelectLabel className="text-gray-400">Categories</SelectLabel>
-                  <SelectItem value="all" className="text-white hover:bg-gray-600">All Categories</SelectItem>
+                  <SelectLabel className="text-gray-500">Categories</SelectLabel>
+                  <SelectItem value="all" className="text-gray-700 hover:bg-[rgba(153,69,255,0.05)]">All Categories</SelectItem>
                   {Object.entries(categories).map(([key, value]) => (
-                    <SelectItem key={key} value={key} className="text-white hover:bg-gray-600">
+                    <SelectItem key={key} value={key} className="text-gray-700 hover:bg-[rgba(153,69,255,0.05)]">
                       {value}
                     </SelectItem>
                   ))}
@@ -125,24 +125,24 @@ export default function SearchPage() {
           {paginatedAPIs.map((api) => (
             <div
               key={api.path}
-              className="bg-gray-700 rounded-lg p-6 hover:bg-gray-600 transition-colors"
+              className="bg-gradient-to-br from-[rgba(255,255,255,0.9)] to-[rgba(255,255,255,0.7)] backdrop-blur-xl border border-[rgba(0,0,0,0.08)] rounded-lg p-6 shadow-sm hover:shadow-md transition-all"
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400">
+                  <div className="p-2 bg-gradient-to-r from-[rgba(153,69,255,0.1)] to-[rgba(20,241,149,0.1)] rounded-lg text-[#9945FF]">
                     {getCategoryIcon(api.category)}
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-white">{api.summary}</h3>
-                    <p className="text-sm text-gray-400">{api.category}</p>
+                    <h3 className="text-lg font-semibold text-gray-700">{api.summary}</h3>
+                    <p className="text-sm text-gray-500">{api.category}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm text-gray-400">Method</div>
-                  <div className="text-white font-medium">{api.method}</div>
+                  <div className="text-sm text-gray-500">Method</div>
+                  <div className="text-gray-700 font-medium">{api.method}</div>
                 </div>
               </div>
-              <p className="mt-4 text-gray-300">
+              <p className="mt-4 text-gray-600">
                 {api.description.split('Returns:').map((part, index) => (
                   <React.Fragment key={index}>
                     {index > 0 && <br />}
@@ -151,8 +151,8 @@ export default function SearchPage() {
                 ))}
               </p>
               <div className="mt-4">
-                <div className="text-sm text-gray-400">
-                  Path: <span className="text-white">{api.path}</span>
+                <div className="text-sm text-gray-500">
+                  Path: <span className="text-gray-700">{api.path}</span>
                 </div>
               </div>
             </div>
@@ -162,7 +162,7 @@ export default function SearchPage() {
         {/* No Results Message */}
         {filteredAPIs.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-400 text-lg">No APIs found matching your search criteria</p>
+            <p className="text-gray-500 text-lg">No APIs found matching your search criteria</p>
           </div>
         )}
 

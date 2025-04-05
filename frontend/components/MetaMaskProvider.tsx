@@ -11,7 +11,7 @@ const MetaMaskProvider = ({ children }: MetaMaskProviderProps) => {
       debug={false}
       sdkOptions={{
         dappMetadata: {
-          name: "HashScope",
+          name: "OmniScope",
           url: typeof window !== 'undefined' ? window.location.href : '',
         }
       }}

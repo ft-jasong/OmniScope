@@ -13,7 +13,7 @@ export default function MetaMaskProviderWrapper({ children }: MetaMaskProviderWr
       debug={false}
       sdkOptions={{
         dappMetadata: {
-          name: "HashScope",
+          name: "OmniScope",
           url: typeof window !== 'undefined' ? window.location.href : '',
         }
       }}
