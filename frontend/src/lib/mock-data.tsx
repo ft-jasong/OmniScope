@@ -35,7 +35,7 @@ export const allAPIs: BaseAPI[] = [
   },
   {
     id: "3",
-    name: "HSK Network Analytics",
+    name: "ADR Network Analytics",
     description: "Comprehensive network statistics and transaction analysis",
     category: "On-chain Analytics",
     usage: 120000,
@@ -133,9 +133,9 @@ export const hotAPIs: HotAPI[] = allAPIs.map(api => ({
 export const trendingSearches = [
   "BTC Price Feed",
   "Trump Social Sentiment",
-  "HSK Network Activity",
+  "ADR Network Activity",
   "Elon Musk Impact",
   "Exchange Flow Analysis",
-  "HSK Price Feed",
+  "ADR Price Feed",
   "Cathie Wood's Signals"
 ]; 

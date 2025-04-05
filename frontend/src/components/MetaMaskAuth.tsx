@@ -226,7 +226,7 @@ export default function MetaMaskAuth() {
           </div>
           <p className="text-sm text-green-300 mt-1">{account}</p>
           {tokenBalance !== null && (
-            <p className="text-sm text-green-300 mt-1">HSK Balance: {tokenBalance}</p>
+            <p className="text-sm text-green-300 mt-1">ADR Balance: {tokenBalance}</p>
           )}
         </div>
       )}

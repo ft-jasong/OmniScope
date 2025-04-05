@@ -158,7 +158,7 @@ export default function ApiKeyHistoryPage() {
             </div>
             <div className="bg-gray-800 p-4 rounded-lg">
               <h3 className="text-gray-400 text-sm">Total Cost</h3>
-              <p className="text-2xl font-bold text-white">{data.total_cost.toLocaleString()} HSK</p>
+              <p className="text-2xl font-bold text-white">{data.total_cost.toLocaleString()} ADR</p>
             </div>
           </div>
 
@@ -170,7 +170,7 @@ export default function ApiKeyHistoryPage() {
                   <TableHead className="text-white">Method</TableHead>
                   <TableHead className="text-white text-right">Calls</TableHead>
                   <TableHead className="text-white">Last Used</TableHead>
-                  <TableHead className="text-white text-right">Cost (HSK)</TableHead>
+                  <TableHead className="text-white text-right">Cost (ADR)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

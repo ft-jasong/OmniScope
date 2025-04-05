@@ -23,7 +23,7 @@ export default function Home() {
             HashScope
           </h1>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8">
-            An HSK Chain-based tokenized API platform providing real-time crypto data for Al agents.
+            An ADR Chain-based tokenized API platform providing real-time crypto data for Al agents.
           </p>
           <Link
             href={connected ? "/hot" : "/my/profile"}
@@ -41,7 +41,7 @@ export default function Home() {
               <h3 className="text-xl font-semibold text-white">Token-Gated Access</h3>
             </div>
             <p className="text-gray-300">
-              Lock in your HSK tokens to unlock private API keys and start building securely
+              Lock in your ADR tokens to unlock private API keys and start building securely
             </p>
           </div>
 

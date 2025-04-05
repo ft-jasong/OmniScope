@@ -151,7 +151,7 @@ export default function DepositPage() {
     // Validate deposit amount
     const amount = parseFloat(depositAmount)
     if (isNaN(amount) || amount < 0.001) {
-      toast.error("Deposit amount must be at least 0.001 HSK")
+      toast.error("Deposit amount must be at least 0.001 ADR")
       return
     }
 
@@ -224,7 +224,7 @@ export default function DepositPage() {
     <div className="min-h-screen bg-gray-800 p-6">
       <div className="max-w-2xl mx-auto">
         <h1 className="text-2xl font-bold mb-4 text-white">Deposit</h1>
-        <p className="text-gray-300 mb-6">Deposit HSK tokens to your account using your HashKey wallet.</p>
+        <p className="text-gray-300 mb-6">Deposit ADR tokens to your account using your HashKey wallet.</p>
         <Card className="bg-gray-700 border-gray-600">
           <CardHeader>
             <CardTitle className="text-white">Deposit Information</CardTitle>
@@ -241,8 +241,8 @@ export default function DepositPage() {
                   <p className="text-white">{userBalance}</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="depositAmount" className="text-gray-300">Deposit Amount (HSK)</Label>
-                  <p className="text-sm text-gray-400">Minimum deposit amount: 0.001 HSK</p>
+                  <Label htmlFor="depositAmount" className="text-gray-300">Deposit Amount (ADR)</Label>
+                  <p className="text-sm text-gray-400">Minimum deposit amount: 0.001 ADR</p>
                   <Input
                     id="depositAmount"
                     type="number"
